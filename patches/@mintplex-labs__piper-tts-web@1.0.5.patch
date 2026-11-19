@@ -1,0 +1,64 @@
+diff --git a/dist/piper-tts-web.js b/dist/piper-tts-web.js
+index 250fa0133830669eb6c0c215ae494cb9eb7db4bf..e223677ca14be5de4370ad141378f442025b000f 100644
+--- a/dist/piper-tts-web.js
++++ b/dist/piper-tts-web.js
+@@ -11,6 +11,9 @@ var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "
+ var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+ var _createPiperPhonemize, _modelConfig, _ort, _ortSession, _progressCallback, _wasmPaths, _logger, _TtsSession_instances, predictChunk_fn;
+ const HF_BASE = "https://huggingface.co/diffusionstudio/piper-voices/resolve/main";
++// The mirror above lags behind the official repo; these voices only exist upstream.
++const HF_BASE_BY_VOICE = { "de_DE-kerstin-medium": "https://huggingface.co/rhasspy/piper-voices/resolve/main" };
++const baseFor = (voiceId) => HF_BASE_BY_VOICE[voiceId] || HF_BASE;
+ const ONNX_BASE = "https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.18.0/";
+ const WASM_BASE = "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize";
+ const PATH_MAP = {
+@@ -25,6 +28,7 @@ const PATH_MAP = {
+   "de_DE-eva_k-x_low": "de/de_DE/eva_k/x_low/de_DE-eva_k-x_low.onnx",
+   "de_DE-karlsson-low": "de/de_DE/karlsson/low/de_DE-karlsson-low.onnx",
+   "de_DE-kerstin-low": "de/de_DE/kerstin/low/de_DE-kerstin-low.onnx",
++  "de_DE-kerstin-medium": "de/de_DE/kerstin/medium/de_DE-kerstin-medium.onnx",
+   "de_DE-mls-medium": "de/de_DE/mls/medium/de_DE-mls-medium.onnx",
+   "de_DE-pavoque-low": "de/de_DE/pavoque/low/de_DE-pavoque-low.onnx",
+   "de_DE-ramona-low": "de/de_DE/ramona/low/de_DE-ramona-low.onnx",
+@@ -298,10 +302,11 @@ const _TtsSession = class _TtsSession {
+       }
+     }
+     const path = PATH_MAP[this.voiceId];
+-    const modelConfigBlob = await getBlob(`${HF_BASE}/${path}.json`);
++    const base = baseFor(this.voiceId);
++    const modelConfigBlob = await getBlob(`${base}/${path}.json`);
+     __privateSet(this, _modelConfig, JSON.parse(await modelConfigBlob.text()));
+     const modelBlob = await getBlob(
+-      `${HF_BASE}/${path}`,
++      `${base}/${path}`,
+       __privateGet(this, _progressCallback)
+     );
+     __privateSet(this, _ortSession, await ort.InferenceSession.create(
+@@ -387,7 +392,7 @@ predictChunk_fn = async function(text) {
+   });
+   const speakerId = 0;
+   const noiseScale = __privateGet(this, _modelConfig).inference.noise_scale;
+-  const lengthScale = __privateGet(this, _modelConfig).inference.length_scale;
++  const lengthScale = __privateGet(this, _modelConfig).inference.length_scale / (this.speed || 1);
+   const noiseW = __privateGet(this, _modelConfig).inference.noise_w;
+   const session = __privateGet(this, _ortSession);
+   const feeds = {
+@@ -464,14 +469,16 @@ async function getBlob(url, callback) {
+ }
+ async function download(voiceId, callback) {
+   const path = PATH_MAP[voiceId];
+-  const urls = [`${HF_BASE}/${path}`, `${HF_BASE}/${path}.json`];
++  const base = baseFor(voiceId);
++  const urls = [`${base}/${path}`, `${base}/${path}.json`];
+   await Promise.all(urls.map(async (url) => {
+     writeBlob(url, await fetchBlob(url, url.endsWith(".onnx") ? callback : void 0));
+   }));
+ }
+ async function remove(voiceId) {
+   const path = PATH_MAP[voiceId];
+-  const urls = [`${HF_BASE}/${path}`, `${HF_BASE}/${path}.json`];
++  const base = baseFor(voiceId);
++  const urls = [`${base}/${path}`, `${base}/${path}.json`];
+   await Promise.all(urls.map((url) => removeBlob(url)));
+ }
+ async function stored() {

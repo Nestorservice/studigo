@@ -1,0 +1,58 @@
+[package]
+name = "studigo"
+version = "0.1.0"
+description = "Local-first AI study companion"
+authors = ["Toukea Pessong Nestor Corneille (https://github.com/Nestorservice)"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "studigo_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri-plugin-sql = { version = "2.5.0", features = ["sqlite"] }
+tauri-plugin-http = { version = "~2.8", features = ["blocking"] }
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
+tauri-plugin-notification = "~2.8"
+tauri-plugin-autostart = "~2.7"
+tauri-plugin-opener = "~2.7"
+tauri-plugin-updater = "~2.14"
+tauri-plugin-process = "~2.4"
+tauri-plugin-dialog = "~2.8"
+tiny_http = "0.12.0"
+qrcode = { version = "0.14.1", default-features = false, features = ["svg"] }
+
+# GPU speech recognition only where Metal exists; CPU elsewhere.
+[target.'cfg(target_os = "macos")'.dependencies]
+whisper-rs = { version = "0.16", features = ["metal"] }
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+whisper-rs = "0.16"
+
+
+# Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true
+
+# Proc macros (sqlx-macros) load as host dylibs; stripping them breaks dlopen with the macOS 27 linker
+# ("mis-aligned LINKEDIT string pool"). The app binary is still stripped.
+[profile.release.build-override]
+strip = false
+
+# whisper.cpp unoptimized is unusably slow; keep it fast in `tauri dev` too.
+[profile.dev.package.whisper-rs-sys]
+opt-level = 3

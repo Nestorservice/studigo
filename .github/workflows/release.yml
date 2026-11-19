@@ -1,0 +1,95 @@
+# Builds macOS (Apple silicon + Intel), Windows and Linux and uploads them with a merged latest.json
+# to a draft GitHub release. Push a tag `v<version>` (matching tauri.conf.json), wait for all jobs,
+# then publish the draft: the in-app updater only sees published releases.
+# Manual runs (workflow_dispatch) just build, as a smoke test, without touching releases.
+# A tag with a pre-release part (v1.8.0-1) makes a pre-release: only beta testers get it (channel.yml).
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  # One draft before the matrix starts: four jobs looking for it at once made two drafts for v1.5.0.
+  release:
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      id: ${{ steps.draft.outputs.id }}
+    steps:
+      - id: draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        # The id comes from the create response: listing releases right after creating a draft can miss it
+        # (v1.6.0 got an empty id, so every build skipped its upload). GitHub appends its PR list to the body:
+        # edit it before publishing, the app shows it in "What's new" (src/releaseNotes.ts drops the download note).
+        run: |
+          id=$(gh api "repos/$GITHUB_REPOSITORY/releases" -f tag_name="$TAG" -F draft=true -F prerelease=$([[ $TAG == *-* ]] && echo true || echo false) -F generate_release_notes=true -f name="Studigo ${TAG#v}" \
+            -f body="Downloads for macOS, Windows and Linux. The macOS app is not notarized yet: see the README for the one-time \`xattr\` command." --jq .id)
+          [ -n "$id" ] || { echo "no release id" >&2; exit 1; }
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: release
+    if: ${{ !cancelled() && needs.release.result != 'failure' }} # manual runs skip `release` and still build
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+          - platform: ubuntu-22.04
+            args: ""
+          - platform: windows-latest
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    env:
+      # Keep whisper.cpp portable: -march=native on a runner with AVX-512 crashes on older CPUs.
+      CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/.github/cmake/ggml-generic.toolchain.cmake
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils libdbus-1-dev pkg-config
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: ${{ matrix.args }}
+
+      - run: pnpm install --frozen-lockfile
+      - name: Whisper model
+        shell: bash
+        run: pnpm fetch-model
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          releaseId: ${{ needs.release.outputs.id }} # empty on manual runs: build only
+          # ponytail: each job merges latest.json as it finishes; two finishing in the same second could drop a platform. Check it before publishing.
+          args: ${{ matrix.args }}

@@ -1,0 +1,25 @@
+# Placeholder study course. The real path is generated from the learner's imported sources.
+# The existing course schema is reused so profiles, XP, the garden and the league keep working
+# while the study domain is built on top of them.
+name: Études
+native_name: Études
+iso: xx
+flag: 📚
+
+levels:
+  A1:
+    title: Parcours d'étude
+    description: Importe tes cours pour construire ton parcours.
+    units:
+      - id: import
+        title: Importer ton premier cours
+        description: PDF, Word, image, vidéo, YouTube ou page web.
+        icon: 📥
+        steps:
+          - id: first-source
+            title: Ajouter une source
+            description: Le tuteur analysera chaque page, chaque formule et chaque schéma.
+            vocabulary: []
+            grammar: []
+            activities:
+              - { type: learn }

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Studigo",
+  "version": "0.1.0",
+  "identifier": "com.nestorservice.studigo",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm fetch-model && pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Studigo",
+        "width": 1366,
+        "height": 860,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "publisher": "Toukea Pessong Nestor Corneille",
+    "copyright": "© 2026 Toukea Pessong Nestor Corneille",
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [
+      "resources/*"
+    ],
+    "macOS": {
+      "signingIdentity": "-",
+      "minimumSystemVersion": "11.0",
+      "entitlements": "./Entitlements.plist"
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFENkZGREQ4QjFGODM2RkYKUldUL052aXgyUDF2clJRWWM1TFRtSlZJUFRkSlRpR2RyWkZsemlXZ3hDdlJZcThoYWJaQWltY2kK",
+      "endpoints": [
+        "https://github.com/Nestorservice/studigo/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}

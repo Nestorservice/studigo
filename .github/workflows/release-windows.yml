@@ -1,0 +1,71 @@
+# Windows-only test build: publishes the NSIS installer (.exe) to a GitHub release.
+# Push a tag like `win-v1.12.0`, or run it manually from the Actions tab.
+# The tag deliberately does not start with `v`: the cross-platform release.yml only handles `v*`,
+# and channel.yml/tap.yml only handle real `v*` releases.
+name: release-windows
+
+on:
+  push:
+    tags: ["win-v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. win-v1.12.0)"
+        required: true
+        default: "win-v1.12.0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      # See .github/cmake/ggml-generic.toolchain.cmake: without this, whisper.cpp is built
+      # with AVX-512 and crashes on older CPUs.
+      CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/.github/cmake/ggml-generic.toolchain.cmake
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: pnpm install --frozen-lockfile
+      - name: Whisper model
+        shell: bash
+        run: pnpm fetch-model
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
+          releaseName: "Studigo (Windows) ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}"
+          releaseBody: |
+            Windows installer (NSIS) for Studigo 1.12.1.
+
+            - Fixes the 1.12.0 desktop crash on CPUs without AVX-512 (illegal instruction
+              when Whisper starts in a live call): whisper.cpp is now built portably.
+            - Mobile layout: long text wraps and the live-call controls stay on screen.
+
+            The installer is unsigned: Windows SmartScreen may ask you to click
+            **More info → Run anyway**. Marked as a pre-release, so it does not become
+            the "latest" release used by the in-app updater.
+          releaseDraft: false
+          prerelease: true
+          # No signing key on this fork: skip latest.json and .sig uploads.
+          uploadUpdaterJson: false
+          uploadUpdaterSignatures: false
+          args: --bundles nsis --config .github/tauri.ci.conf.json
