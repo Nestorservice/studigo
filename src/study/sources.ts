@@ -15,6 +15,7 @@ export type Source = {
   status: "todo" | "ready";
   pages?: number;
   pdfId?: string;
+  subjectId?: string;
 };
 
 /** Placeholder course used to create a profile until subjects are generated from sources. */
@@ -39,7 +40,7 @@ export const loadSources = () => (cache ??= read());
 
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-export function addSource(input: { id?: string; name: string; kind: SourceKind; size?: number; url?: string; pages?: number; pdfId?: string; status?: "todo" | "ready" }): Source {
+export function addSource(input: { id?: string; name: string; kind: SourceKind; size?: number; url?: string; pages?: number; pdfId?: string; subjectId?: string; status?: "todo" | "ready" }): Source {
   const source: Source = {
     id: input.id ?? uid(),
     name: input.name,
@@ -48,6 +49,7 @@ export function addSource(input: { id?: string; name: string; kind: SourceKind; 
     url: input.url,
     pages: input.pages,
     pdfId: input.pdfId,
+    subjectId: input.subjectId,
     addedAt: Date.now(),
     status: input.status ?? "todo",
   };
@@ -60,16 +62,16 @@ export function updateSource(id: string, patch: Partial<Source>) {
 }
 
 /** Parses a PDF locally, stores its bytes/text and returns the source ready to study. */
-export async function importFile(file: File, onProgress?: (page: number, total: number) => void): Promise<Source> {
+export async function importFile(file: File, subjectId: string | null | undefined, onProgress?: (page: number, total: number) => void): Promise<Source> {
   const kind = kindOf(file.name);
   if (kind === "pdf") {
     const parsed = await parsePdf(file, onProgress);
     const id = uid();
     await saveDoc({ id, bytes: parsed.bytes, texts: parsed.texts, pages: parsed.pages });
     await initCoverage(id, parsed.pages);
-    return addSource({ id, name: file.name, kind, size: file.size, pages: parsed.pages, pdfId: id, status: "ready" });
+    return addSource({ id, name: file.name, kind, size: file.size, pages: parsed.pages, pdfId: id, subjectId: subjectId ?? undefined, status: "ready" });
   }
-  return addSource({ name: file.name, kind, size: file.size });
+  return addSource({ name: file.name, kind, size: file.size, subjectId: subjectId ?? undefined });
 }
 
 export async function removeSource(id: string) {

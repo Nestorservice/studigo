@@ -5,7 +5,8 @@ import { useApp, type BootError, type Route } from "./store";
 import { Rail } from "./Rail";
 import { Lesson, sfxState } from "./Lesson";
 import { today } from "./progress";
-import { nudgeDue, nudgeMessage } from "./nudge";
+import { nudgeDue } from "./nudge";
+import { studyNudgeKey } from "./study/nudge";
 import { keepInBackground, notify } from "./notify";
 import { takeOver, resetDataDir } from "./datadir";
 import { findUpdate, UpdateSheet, whatsNew, WhatsNewSheet } from "./Update";
@@ -18,11 +19,10 @@ import { CHARACTERS, parseTalkId, type CharacterId } from "./characters";
 import { parseStoryId, type Cefr } from "./course";
 import { parseWriteId } from "./writing";
 import { Writing } from "./Write";
-import { Garden } from "./screens/Garden";
 import { Settings } from "./screens/Settings";
-import { Avatar, ProfileGate, useLangName } from "./screens/Profiles";
+import { Avatar, ProfileGate } from "./screens/Profiles";
 import { League, Shop, Profile, Friends, Notifications, LiveButton } from "./screens/Screens";
-import { StudyHome, StudyLibrary, StudyPractice, StudyRoom, StudySheets } from "./screens/Study";
+import { StudyGarden, StudyHome, StudyLibrary, StudyPractice, StudyRoom, StudySheets } from "./screens/Study";
 
 const NAV: { id: Route; icon: IconName }[] = [
   { id: "learn", icon: "home" }, { id: "practice", icon: "dumbbell" }, { id: "league", icon: "trophy" },
@@ -35,7 +35,7 @@ const MORE: { id: Route; icon: IconName }[] = [
 const SCREENS: Record<Route, () => React.ReactNode> = {
   learn: StudyHome, practice: StudyPractice, league: League, shop: Shop, profile: Profile,
   stories: StudyLibrary, roleplay: StudyRoom, friends: Friends, notifications: Notifications, settings: Settings,
-  garden: Garden, grammar: StudySheets,
+  garden: StudyGarden, grammar: StudySheets,
 };
 
 /** Text size (#34): the webview's own zoom in the app, so vh and px scale together. Zoom hotkeys stay off (tauri.conf default), so nothing fights it.
@@ -135,8 +135,7 @@ function FutureOrFailed({ e, future }: { e: BootError; future: boolean }) {
 
 export default function App() {
   const { t, i18n } = useTranslation();
-  const { ready, bootError, profile, route, sheet, openSheet, closeSheet, toastMsg, toastOn, lessonId, endLesson, s, setS, course, logout } = useApp();
-  const langName = useLangName();
+  const { ready, bootError, profile, route, sheet, openSheet, closeSheet, toastMsg, toastOn, lessonId, endLesson, s, setS, logout } = useApp();
   const Screen = SCREENS[route];
   const talk = lessonId && /^(chat|call|rehearse|drill):/.test(lessonId) ? parseTalkId(lessonId) : undefined;
   const story = lessonId?.startsWith("story:") ? parseStoryId(lessonId) : undefined;
@@ -207,22 +206,21 @@ export default function App() {
   // ponytail: a PIN-locked profile never auto-signs in, so its reminder only fires once someone signs in
   useEffect(() => { keepInBackground(!!profile && s.reminderOn); }, [profile?.id, s.reminderOn]);
 
-  // Nudges (Settings → Reminders): up to 3 a day, checked every minute while the app runs, even in the background.
+  // Study reminders: up to 3 a day, checked every minute while the app is alive.
   useEffect(() => {
-    if (!profile || !s.reminderOn || !course) return;
+    if (!profile || !s.reminderOn) return;
     const tick = () => {
       const slot = nudgeDue(s);
       if (slot === null) return;
       const day = today();
       setS((x) => ({ ...x, reminded: `${day}:${slot}` }));
-      const { group, i } = nudgeMessage(slot, s.streak, day);
-      const vars = { count: s.streak, lang: langName(course.iso) };
-      notify(t(`nudges.${group}.${i}.t`, vars), t(`nudges.${group}.${i}.b`, vars));
+      const key = studyNudgeKey(slot, s.streak, s.lastActive, day);
+      notify(t(`studyNudge.${key}.t`), t(`studyNudge.${key}.b`));
     };
     tick();
     const h = setInterval(tick, 60_000);
     return () => clearInterval(h);
-  }, [profile?.id, s.reminderOn, s.lastActive, s.reminded, s.streak, course?.iso, i18n.language]);
+  }, [profile?.id, s.reminderOn, s.lastActive, s.reminded, s.streak, i18n.language]);
 
   if (bootError) return <BootErrorScreen e={bootError} />;
   if (!ready) return null;

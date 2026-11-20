@@ -14,7 +14,7 @@ export type ExplanationRecord = {
   check: { question: string; answer: string }[];
   createdAt: number;
 };
-type CoverageRow = { sourceId: string; statuses: PageStatus[] };
+export type CoverageRow = { sourceId: string; statuses: PageStatus[] };
 
 const DB_NAME = "studigo-study";
 const DB_VERSION = 2;
@@ -85,6 +85,15 @@ export async function getCoverage(sourceId: string, pages: number): Promise<Page
     const row = (await request(db.transaction("coverage").objectStore("coverage").get(sourceId))) as CoverageRow | undefined;
     return pad(row?.statuses, pages);
   } catch { return pad(memoryCoverage.get(sourceId), pages); }
+}
+
+export async function listCoverage(): Promise<CoverageRow[]> {
+  try {
+    const db = await openDb();
+    return (await request(db.transaction("coverage").objectStore("coverage").getAll())) as CoverageRow[];
+  } catch {
+    return [...memoryCoverage.entries()].map(([sourceId, statuses]) => ({ sourceId, statuses }));
+  }
 }
 
 export async function initCoverage(sourceId: string, pages: number): Promise<void> {

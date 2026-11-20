@@ -19,11 +19,12 @@ export function localRequest(c: LocalTts, text: string, speed = 1): ByteRequest 
   };
 }
 
-/** ElevenLabs Turbo v2.5 (it takes an explicit language; without one it guesses from the text). Replies with MP3.
- *  `speed` is clamped to the 0.7–1.2 ElevenLabs accepts. */
+/** ElevenLabs Turbo v2.5 (it takes an explicit language; without one it guesses from the text).
+ *  The streaming endpoint plus `optimize_streaming_latency=3` starts the audio sooner, which matters
+ *  in a live conversation. Replies with MP3. `speed` is clamped to the 0.7–1.2 ElevenLabs accepts. */
 export function elevenRequest(key: string, voiceId: string, text: string, lang: string, speed = 1): ByteRequest {
   return {
-    url: `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}`,
+    url: `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}/stream?optimize_streaming_latency=3&output_format=mp3_44100_128`,
     headers: { "xi-api-key": key, "Content-Type": "application/json" },
     body: JSON.stringify({ text, model_id: "eleven_turbo_v2_5", language_code: lang.slice(0, 2).toLowerCase(),
       ...(speed !== 1 ? { voice_settings: { speed: Math.min(1.2, Math.max(0.7, speed)) } } : {}) }),

@@ -1126,6 +1126,46 @@
     "askPlaceholder": "Kérdés erről az oldalról…",
     "send": "Küldés",
     "aiNeeded": "Előbb állíts be egy MI-szolgáltatót a beállításokban.",
-    "noExplanations": "Még nincs mentett magyarázat. Nyiss meg egy oldalt, és nyomd meg az „Oldal magyarázata” gombot."
+    "noExplanations": "Még nincs mentett magyarázat. Nyiss meg egy oldalt, és nyomd meg az „Oldal magyarázata” gombot.",
+    "subjects": "Tantárgyak",
+    "noSubjects": "Még nincs tantárgy. Hozz létre egyet lent.",
+    "newSubject": "Új tantárgy",
+    "subjectName": "Tantárgy neve",
+    "subjectIcon": "Ikon",
+    "subjectColor": "Szín",
+    "create": "Létrehozás",
+    "subjectMeta": "{{sources}} forrás · {{done}} / {{total}} oldal elsajátítva",
+    "openSubject": "Tantárgy megnyitása",
+    "importPdf": "PDF importálása",
+    "subjectRemoved": "Tantárgy törölve",
+    "subjectDone": "{{name}} kész!",
+    "subjectDoneDesc": "Minden oldal elsajátítva. A fád megnőtt.",
+    "gardenTitle": "Tanulókertem",
+    "gardenDesc": "A fád az elsajátított oldalakkal nő, tantárgyanként.",
+    "treeHint": "Minden elsajátított oldal növeszti a fát; a napi gyökerek zölden tartják.",
+    "askVoice": "Kérdés hanggal",
+    "subject": "Tantárgy"
+  },
+  "studyNudge": {
+    "morning": {
+      "t": "A fád vár",
+      "b": "Ma egy oldal is elég, hogy növekedjen."
+    },
+    "afternoon": {
+      "t": "Folytatjuk?",
+      "b": "A kurzusod és a tanárod készen áll."
+    },
+    "evening": {
+      "t": "Utolsó hívás a fához",
+      "b": "Néhány perc életben tartja a gyökereidet."
+    },
+    "streak": {
+      "t": "{{count}} nap gyökér",
+      "b": "Ne hagyd kiszáradni a fát: egy oldal is elég."
+    },
+    "comeback": {
+      "t": "A kurzusod vár",
+      "b": "Gyere vissza, amikor akarsz; onnan folytatjuk."
+    }
   }
 }

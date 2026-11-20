@@ -1158,6 +1158,46 @@
     "askPlaceholder": "Une question sur cette page…",
     "send": "Envoyer",
     "aiNeeded": "Configure d'abord un fournisseur d'IA dans les réglages.",
-    "noExplanations": "Aucune explication enregistrée. Ouvre une page et clique sur « Expliquer cette page »."
+    "noExplanations": "Aucune explication enregistrée. Ouvre une page et clique sur « Expliquer cette page ».",
+    "subjects": "Matières",
+    "noSubjects": "Aucune matière pour l'instant. Crée-en une ci-dessous.",
+    "newSubject": "Nouvelle matière",
+    "subjectName": "Nom de la matière",
+    "subjectIcon": "Icône",
+    "subjectColor": "Couleur",
+    "create": "Créer",
+    "subjectMeta": "{{sources}} source(s) · {{done}} / {{total}} pages maîtrisées",
+    "openSubject": "Ouvrir la matière",
+    "importPdf": "Importer un PDF",
+    "subjectRemoved": "Matière supprimée",
+    "subjectDone": "{{name}} terminée !",
+    "subjectDoneDesc": "Toutes les pages sont maîtrisées. Ton arbre a bien poussé.",
+    "gardenTitle": "Mon jardin d'étude",
+    "gardenDesc": "Ton arbre pousse avec les pages maîtrisées, matière par matière.",
+    "treeHint": "Chaque page maîtrisée fait pousser l'arbre ; des jours de racines le gardent vert.",
+    "askVoice": "Poser la question à voix haute",
+    "subject": "Matière"
+  },
+  "studyNudge": {
+    "morning": {
+      "t": "Ton arbre t'attend",
+      "b": "Une page aujourd'hui suffit pour le faire pousser."
+    },
+    "afternoon": {
+      "t": "On reprend ?",
+      "b": "Ton cours et ton tuteur sont prêts."
+    },
+    "evening": {
+      "t": "Dernier appel pour ton arbre",
+      "b": "Quelques minutes suffisent pour garder tes racines."
+    },
+    "streak": {
+      "t": "{{count}} jours de racines",
+      "b": "Ne laisse pas ton arbre se dessécher : une page suffit."
+    },
+    "comeback": {
+      "t": "Ton cours t'attend",
+      "b": "Reviens quand tu veux, on reprend là où tu t'es arrêté."
+    }
   }
 }

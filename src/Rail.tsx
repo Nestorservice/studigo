@@ -1,16 +1,18 @@
 import { useTranslation } from "react-i18next";
 import { Icon } from "./icons";
 import { useApp } from "./store";
-import { treeState, treeSvg } from "./tree";
+import { treeSvg } from "./tree";
 import { useLeague } from "./screens/Screens";
 import { CourseFlag } from "./screens/Profiles";
+import { studyTree, useStudyTotals } from "./study/subjects";
 
 const QUEST_KEY = { q1: "rail.qXp", q2: "rail.qLessons", q3: "rail.qPractice" } as const;
 
 export function Rail() {
   const { t } = useTranslation();
-  const { s, setS, go, openSheet, closeSheet, course, done } = useApp();
-  const tree = treeState(done, s.streak, s.lastActive);
+  const { s, setS, go, openSheet, closeSheet, course } = useApp();
+  const { mastered } = useStudyTotals();
+  const tree = studyTree(mastered, s.streak, s.lastActive);
   const league = useLeague();
   const pct = s.quests.reduce((a, q) => a + Math.min(q.cur / q.goal, 1), 0) / (s.quests.length || 1) * 100; // each quest weighs the same
 

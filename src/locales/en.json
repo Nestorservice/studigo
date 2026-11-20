@@ -1126,6 +1126,46 @@
     "askPlaceholder": "A question about this page…",
     "send": "Send",
     "aiNeeded": "Set up an AI provider in Settings first.",
-    "noExplanations": "No saved explanations yet. Open a page and press “Explain this page”."
+    "noExplanations": "No saved explanations yet. Open a page and press “Explain this page”.",
+    "subjects": "Subjects",
+    "noSubjects": "No subjects yet. Create one below.",
+    "newSubject": "New subject",
+    "subjectName": "Subject name",
+    "subjectIcon": "Icon",
+    "subjectColor": "Color",
+    "create": "Create",
+    "subjectMeta": "{{sources}} source(s) · {{done}} / {{total}} pages mastered",
+    "openSubject": "Open subject",
+    "importPdf": "Import a PDF",
+    "subjectRemoved": "Subject deleted",
+    "subjectDone": "{{name}} complete!",
+    "subjectDoneDesc": "Every page is mastered. Your tree has grown.",
+    "gardenTitle": "My study garden",
+    "gardenDesc": "Your tree grows with mastered pages, subject by subject.",
+    "treeHint": "Every mastered page grows the tree; daily roots keep it green.",
+    "askVoice": "Ask by voice",
+    "subject": "Subject"
+  },
+  "studyNudge": {
+    "morning": {
+      "t": "Your tree is waiting",
+      "b": "One page today is enough to grow it."
+    },
+    "afternoon": {
+      "t": "Pick up where you left off",
+      "b": "Your course and tutor are ready."
+    },
+    "evening": {
+      "t": "Last call for your tree",
+      "b": "A few minutes keep your roots alive."
+    },
+    "streak": {
+      "t": "{{count}} days of roots",
+      "b": "Don't let your tree dry out: one page is enough."
+    },
+    "comeback": {
+      "t": "Your course is waiting",
+      "b": "Come back whenever you want; we'll pick up where you left off."
+    }
   }
 }

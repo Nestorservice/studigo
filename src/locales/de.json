@@ -1126,6 +1126,46 @@
     "askPlaceholder": "Eine Frage zu dieser Seite…",
     "send": "Senden",
     "aiNeeded": "Richte zuerst einen KI-Anbieter in den Einstellungen ein.",
-    "noExplanations": "Noch keine gespeicherten Erklärungen. Öffne eine Seite und klicke auf „Diese Seite erklären“."
+    "noExplanations": "Noch keine gespeicherten Erklärungen. Öffne eine Seite und klicke auf „Diese Seite erklären“.",
+    "subjects": "Fächer",
+    "noSubjects": "Noch keine Fächer. Erstelle unten eines.",
+    "newSubject": "Neues Fach",
+    "subjectName": "Fachname",
+    "subjectIcon": "Symbol",
+    "subjectColor": "Farbe",
+    "create": "Erstellen",
+    "subjectMeta": "{{sources}} Quelle(n) · {{done}} / {{total}} Seiten beherrscht",
+    "openSubject": "Fach öffnen",
+    "importPdf": "PDF importieren",
+    "subjectRemoved": "Fach gelöscht",
+    "subjectDone": "{{name}} abgeschlossen!",
+    "subjectDoneDesc": "Alle Seiten sind beherrscht. Dein Baum ist gewachsen.",
+    "gardenTitle": "Mein Lerngarten",
+    "gardenDesc": "Dein Baum wächst mit den beherrschten Seiten, Fach für Fach.",
+    "treeHint": "Jede beherrschte Seite lässt den Baum wachsen; tägliche Wurzeln halten ihn grün.",
+    "askVoice": "Per Stimme fragen",
+    "subject": "Fach"
+  },
+  "studyNudge": {
+    "morning": {
+      "t": "Dein Baum wartet",
+      "b": "Eine Seite heute reicht, um ihn wachsen zu lassen."
+    },
+    "afternoon": {
+      "t": "Weiter geht's",
+      "b": "Dein Kurs und dein Tutor sind bereit."
+    },
+    "evening": {
+      "t": "Letzter Aufruf für deinen Baum",
+      "b": "Ein paar Minuten halten deine Wurzeln am Leben."
+    },
+    "streak": {
+      "t": "{{count}} Tage Wurzeln",
+      "b": "Lass deinen Baum nicht austrocknen: eine Seite reicht."
+    },
+    "comeback": {
+      "t": "Dein Kurs wartet",
+      "b": "Komm zurück, wann du willst; wir machen dort weiter."
+    }
   }
 }

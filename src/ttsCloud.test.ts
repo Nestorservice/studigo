@@ -4,7 +4,7 @@ import { elevenRequest, ELEVEN_VOICES, localRequest, LOCAL_TTS } from "./ttsClou
 
 test("ElevenLabs request: voice in the path, key header, turbo model with the language", () => {
   const r = elevenRequest("k123", ELEVEN_VOICES.f, "Hola", "es-ES");
-  assert.equal(r.url, "https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM");
+  assert.equal(r.url, "https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM/stream?optimize_streaming_latency=3&output_format=mp3_44100_128");
   assert.deepEqual(r.headers, { "xi-api-key": "k123", "Content-Type": "application/json" });
   assert.deepEqual(JSON.parse(r.body), { text: "Hola", model_id: "eleven_turbo_v2_5", language_code: "es" });
 });

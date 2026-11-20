@@ -1120,6 +1120,46 @@
     "askPlaceholder": "Bu sayfa hakkında bir soru…",
     "send": "Gönder",
     "aiNeeded": "Önce ayarlardan bir yapay zekâ sağlayıcısı kur.",
-    "noExplanations": "Henüz kaydedilmiş açıklama yok. Bir sayfa aç ve „Bu sayfayı açıkla” düğmesine bas."
+    "noExplanations": "Henüz kaydedilmiş açıklama yok. Bir sayfa aç ve „Bu sayfayı açıkla” düğmesine bas.",
+    "subjects": "Dersler",
+    "noSubjects": "Henüz ders yok. Aşağıda bir tane oluştur.",
+    "newSubject": "Yeni ders",
+    "subjectName": "Ders adı",
+    "subjectIcon": "Simge",
+    "subjectColor": "Renk",
+    "create": "Oluştur",
+    "subjectMeta": "{{sources}} kaynak · {{done}} / {{total}} sayfa öğrenildi",
+    "openSubject": "Dersi aç",
+    "importPdf": "PDF içe aktar",
+    "subjectRemoved": "Ders silindi",
+    "subjectDone": "{{name}} tamamlandı!",
+    "subjectDoneDesc": "Tüm sayfalar öğrenildi. Ağacın büyüdü.",
+    "gardenTitle": "Çalışma bahçem",
+    "gardenDesc": "Ağacın öğrenilen sayfalarla, ders ders büyür.",
+    "treeHint": "Her öğrenilen sayfa ağacı büyütür; günlük kökler onu yeşil tutar.",
+    "askVoice": "Sesle sor",
+    "subject": "Ders"
+  },
+  "studyNudge": {
+    "morning": {
+      "t": "Ağacın seni bekliyor",
+      "b": "Bugün bir sayfa büyümesi için yeter."
+    },
+    "afternoon": {
+      "t": "Devam edelim mi?",
+      "b": "Dersin ve öğretmenin hazır."
+    },
+    "evening": {
+      "t": "Ağacın için son çağrı",
+      "b": "Birkaç dakika köklerini canlı tutar."
+    },
+    "streak": {
+      "t": "{{count}} günlük kök",
+      "b": "Ağacının kurumasına izin verme: bir sayfa yeter."
+    },
+    "comeback": {
+      "t": "Dersin seni bekliyor",
+      "b": "İstediğin zaman dön; kaldığın yerden devam ederiz."
+    }
   }
 }
