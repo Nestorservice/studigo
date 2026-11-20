@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { deleteDoc, initCoverage, saveDoc } from "./store";
+import { forgetPdf, parsePdf } from "./pdf";
 
 /** The study domain starts here: sources are the material the tutor will work from.
  *  This first version stores metadata locally; ingestion/analysis comes next. */
@@ -11,6 +13,8 @@ export type Source = {
   url?: string;
   addedAt: number;
   status: "todo" | "ready";
+  pages?: number;
+  pdfId?: string;
 };
 
 /** Placeholder course used to create a profile until subjects are generated from sources. */
@@ -33,21 +37,49 @@ const write = (sources: Source[]) => {
 
 export const loadSources = () => (cache ??= read());
 
-export function addSource(input: { name: string; kind: SourceKind; size?: number; url?: string }): Source {
+const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+export function addSource(input: { id?: string; name: string; kind: SourceKind; size?: number; url?: string; pages?: number; pdfId?: string; status?: "todo" | "ready" }): Source {
   const source: Source = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: input.id ?? uid(),
     name: input.name,
     kind: input.kind,
     size: input.size,
     url: input.url,
+    pages: input.pages,
+    pdfId: input.pdfId,
     addedAt: Date.now(),
-    status: "todo",
+    status: input.status ?? "todo",
   };
   write([source, ...loadSources()]);
   return source;
 }
 
-export const removeSource = (id: string) => write(loadSources().filter((s) => s.id !== id));
+export function updateSource(id: string, patch: Partial<Source>) {
+  write(loadSources().map((s) => (s.id === id ? { ...s, ...patch } : s)));
+}
+
+/** Parses a PDF locally, stores its bytes/text and returns the source ready to study. */
+export async function importFile(file: File, onProgress?: (page: number, total: number) => void): Promise<Source> {
+  const kind = kindOf(file.name);
+  if (kind === "pdf") {
+    const parsed = await parsePdf(file, onProgress);
+    const id = uid();
+    await saveDoc({ id, bytes: parsed.bytes, texts: parsed.texts, pages: parsed.pages });
+    await initCoverage(id, parsed.pages);
+    return addSource({ id, name: file.name, kind, size: file.size, pages: parsed.pages, pdfId: id, status: "ready" });
+  }
+  return addSource({ name: file.name, kind, size: file.size });
+}
+
+export async function removeSource(id: string) {
+  const source = loadSources().find((s) => s.id === id);
+  if (source?.pdfId) {
+    forgetPdf(source.pdfId);
+    await deleteDoc(source.pdfId);
+  }
+  write(loadSources().filter((s) => s.id !== id));
+}
 
 export function useSources() {
   const [sources, setSources] = useState(loadSources);

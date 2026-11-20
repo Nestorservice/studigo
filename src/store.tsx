@@ -10,7 +10,7 @@ import { rollDay, today } from "./progress";
 import { FutureSchemaError } from "./migrate";
 import { DataDirError, LockedError, startHeartbeat } from "./datadir";
 import { onHandoff } from "./companion";
-import { prewarm, translateMode } from "./tts";
+import { prewarm } from "./tts";
 
 export type Route = "learn" | "practice" | "league" | "shop" | "profile" | "stories" | "roleplay" | "friends" | "notifications" | "settings" | "garden" | "grammar";
 const ROUTES: Route[] = ["learn", "practice", "league", "shop", "profile", "stories", "roleplay", "friends", "notifications", "settings", "garden", "grammar"];
@@ -99,15 +99,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const usable = enrollments.filter((e) => courses.some((c) => c.iso === e.course_iso));
   const enrollment = usable.find((e) => e.id === profile?.active_enrollment_id) ?? usable[0] ?? null;
   const course = courses.find((c) => c.iso === enrollment?.course_iso) ?? null;
-  // Download the local voices while the learner is still browsing, so the first "Listen" is not the system voice.
-  // One at a time: piper-tts-web keeps a single session, so two voices loading together would swap each other.
+  // Preload the explanation voice. Study has no course language, only the explanation language.
   useEffect(() => {
-    if (!profile || !course) return;
-    void prewarm(course.iso)
-      .then(() => (profile.native_lang === course.iso ? undefined : translateMode()))
-      .then((m) => { if (m && m !== "off") return prewarm(profile.native_lang); })
-      .catch(() => {});
-  }, [profile?.id, profile?.native_lang, course?.iso]);
+    if (!profile) return;
+    void prewarm(profile.native_lang).catch(() => {});
+  }, [profile?.id, profile?.native_lang]);
   useEffect(() => { if (enrollment) { db.doneSteps(enrollment.id).then(setDone); db.legendarySteps(enrollment.id).then(setLegendary); } }, [enrollment?.id]);
 
   // Loads everything that belongs to a profile (E6) and applies its UI prefs.

@@ -49,9 +49,9 @@ export function InfoTip({ label, children }: { label: string; children: React.Re
 
 export function TtsRow() {
   const { t } = useTranslation();
-  const { openSheet, course } = useApp();
+  const { openSheet, profile } = useApp();
   const langName = useLangName();
-  const lang = course?.iso ?? "en";
+  const lang = profile?.native_lang ?? "en";
   const [v, setV] = useState<TtsProvider>("system");
   useEffect(() => { ttsProvider().then(setV); }, []);
   const now = speakingWith(); // the last line spoke with another engine than the saved one (it fell back)
@@ -68,9 +68,9 @@ export function TtsRow() {
 
 function TtsSheet({ initial, onChange }: { initial: TtsProvider; onChange: (v: TtsProvider) => void }) {
   const { t } = useTranslation();
-  const { course, closeSheet, openSheet } = useApp();
+  const { profile, closeSheet, openSheet } = useApp();
   const langName = useLangName();
-  const lang = course?.iso ?? "en";
+  const lang = profile?.native_lang ?? "en";
   const hello = HELLO[lang] ?? HELLO.en, testing = useTtsPreparing(hello);
   const [v, setV] = useState(initial);
   const [pct, setPct] = useState<number | null>(null); // a local voice downloading
@@ -184,8 +184,8 @@ function TtsSheet({ initial, onChange }: { initial: TtsProvider; onChange: (v: T
 /** The ElevenLabs key and voices: test them, then save and switch the voice to ElevenLabs. */
 function ElevenSheet({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => void }) {
   const { t } = useTranslation();
-  const { toast, course } = useApp();
-  const lang = course?.iso ?? "en";
+  const { toast, profile } = useApp();
+  const lang = profile?.native_lang ?? "en";
   const [key, setKey] = useState("");
   const [vf, setVf] = useState("");
   const [vm, setVm] = useState("");
@@ -244,8 +244,8 @@ function ElevenSheet({ onSaved, onCancel }: { onSaved: () => void; onCancel: () 
 /** A local OpenAI-compatible speech server (e.g. Kokoro-FastAPI): address, model and voice; test, then save and switch to it. */
 function LocalTtsSheet({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => void }) {
   const { t } = useTranslation();
-  const { toast, course } = useApp();
-  const lang = course?.iso ?? "en";
+  const { toast, profile } = useApp();
+  const lang = profile?.native_lang ?? "en";
   const [c, setC] = useState(LOCAL_TTS);
   const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -291,17 +291,18 @@ function LocalTtsSheet({ onSaved, onCancel }: { onSaved: () => void; onCancel: (
 
 export function SttRow() {
   const { t } = useTranslation();
-  const { openSheet, course } = useApp();
+  const { openSheet, profile } = useApp();
   const langName = useLangName();
+  const lang = profile?.native_lang ?? "en";
   const [v, setV] = useState<SttProvider>("whisper");
   const [model, setModel] = useState<WhisperModel | null>(null);
   useEffect(() => { sttProvider().then(setV); if (isTauri) whisperModels().then(([c]) => setModel(c)).catch(() => {}); }, []);
-  const better = course && WHISPER_FOR[course.iso];
+  const better = WHISPER_FOR[lang];
   return (
     <div className="card od-row" style={gap("12px")}>
       <span className="od-field od-fill"><b>{t("settings.stt")}</b><span className="muted small">{t(v === "deepgram" ? "settings.sttDeepgram" : "settings.sttWhisper")}</span>
         {v === "whisper" && better && model && model !== better &&
-          <span className="small" style={{ color: "var(--orange)" }}>{t("voice.whisperFor", { lang: langName(course.iso), name: t(`voice.whisper${cap(better)}`) })}</span>}</span>
+          <span className="small" style={{ color: "var(--orange)" }}>{t("voice.whisperFor", { lang: langName(lang), name: t(`voice.whisper${cap(better)}`) })}</span>}</span>
       <HelpButton topic="mic" />
       <button className="btn btn-ghost" onClick={() => openSheet(<SttSheet initial={v} onChange={setV} />)}>{t("settings.change")}</button>
     </div>
@@ -380,9 +381,10 @@ const WHISPER_FOR: Record<string, WhisperModel> = { hu: "turbo" };
 /** Whisper model: the bundled one or a bigger download. Picking one downloads it if needed, then uses it. */
 function WhisperSheet({ onBack }: { onBack: () => void }) {
   const { t } = useTranslation();
-  const { toast, course } = useApp();
+  const { toast, profile } = useApp();
   const langName = useLangName();
-  const better = course && WHISPER_FOR[course.iso];
+  const lang = profile?.native_lang ?? "en";
+  const better = WHISPER_FOR[lang];
   const [cur, setCur] = useState<WhisperModel>("base");
   const [have, setHave] = useState<WhisperModel[]>([]);
   const [busy, setBusy] = useState<{ m: WhisperModel; pct: number } | null>(null);
@@ -421,7 +423,7 @@ function WhisperSheet({ onBack }: { onBack: () => void }) {
     <div className="od-stack" style={sheet}>
       <h3 style={{ textAlign: "center" }}>{t("voice.whisperModel")}</h3>
       <p className="small">{t("voice.whisperModelDesc")}</p>
-      {better && cur !== better && <p className="small" style={{ color: "var(--orange)" }}>{t("voice.whisperFor", { lang: langName(course.iso), name: t(`voice.whisper${cap(better)}`) })}</p>}
+      {better && cur !== better && <p className="small" style={{ color: "var(--orange)" }}>{t("voice.whisperFor", { lang: langName(lang), name: t(`voice.whisper${cap(better)}`) })}</p>}
       <div className="od-stack" style={gap("8px")} role="radiogroup" aria-label={t("voice.whisperModel")}>
         {WHISPER.map((m, i) => (
           <Fragment key={m}>
@@ -457,8 +459,8 @@ function WhisperSheet({ onBack }: { onBack: () => void }) {
 /** Tries the saved recognizer: listens until the sheet closes and lists each utterance it heard. */
 function SttTrySheet({ provider, onBack }: { provider: SttProvider; onBack: () => void }) {
   const { t } = useTranslation();
-  const { course } = useApp();
-  const lang = course?.iso ?? "en";
+  const { profile } = useApp();
+  const lang = profile?.native_lang ?? "en";
   const [heard, setHeard] = useState<string[]>([]);
   const [level, setLevel] = useState(0);
   const [speaking, setSpeaking] = useState(false);

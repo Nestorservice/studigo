@@ -1,16 +1,23 @@
-// Study domain screens. They reuse the existing Sprigo design system and shell:
-// same cards, same call-grid, same navigation. Only the content is academic.
-import { useState } from "react";
+// Study domain screens. Same design system as Sprigo; the language-course domain is gone.
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Icon, type IconName } from "../icons";
 import { useApp } from "../store";
 import { Face } from "../face/Face";
 import { CHARACTERS } from "../characters";
 import { Avatar } from "./Profiles";
-import { addSource, kindOf, removeSource, sourceKindLabel, useSources, youtube, type Source, type SourceKind } from "../study/sources";
+import { getDoc, setCoveragePage, useCoverage, type StoredDoc } from "../study/store";
+import { renderPage } from "../study/pdf";
+import { openStudy, setStudyPage, useStudySession } from "../study/session";
+import { askPageQuestion, explainPage, type PageExplanation } from "../study/ai";
+import {
+  addSource, importFile, kindOf, removeSource, sourceKindLabel, useSources, youtube,
+  type Source, type SourceKind,
+} from "../study/sources";
+import { speak } from "../tts";
 
 const gap = (g: string) => ({ "--od-gap": g }) as React.CSSProperties;
-const TUTOR = CHARACTERS.nora; // a neutral, friendly face; the study tutor is not a language character
+const TUTOR = CHARACTERS.nora; // neutral friendly face; the study tutor is not a language character
 
 const sourceIcon = (k: SourceKind): IconName =>
   k === "video" || k === "youtube" ? "video" : k === "image" ? "book" : k === "web" ? "chat" : "story";
@@ -21,18 +28,58 @@ const sizeLabel = (n?: number) => {
   return mb >= 1 ? `${mb.toFixed(1)} Mo` : `${Math.max(1, Math.round(n / 1024))} Ko`;
 };
 
-function SourceRow({ source }: { source: Source }) {
+function useStoredDoc(source: Source | null) {
+  const [doc, setDoc] = useState<StoredDoc | null>(null);
+  useEffect(() => {
+    let live = true;
+    setDoc(null);
+    if (!source?.pdfId) return;
+    getDoc(source.pdfId).then((d) => { if (live) setDoc(d); }).catch(() => {});
+    return () => { live = false; };
+  }, [source?.pdfId]);
+  return doc;
+}
+
+function SourceRow({ source, onOpen }: { source: Source; onOpen: () => void }) {
   const { t } = useTranslation();
+  const { toast } = useApp();
   return (
     <div className="card od-row" style={gap("12px")}>
       <span className="voice-icon" style={{ color: "var(--blue)" }}><Icon name={sourceIcon(source.kind)} /></span>
       <span className="od-field od-fill">
         <b style={{ overflowWrap: "anywhere" }}>{source.name}</b>
         <span className="muted small">
-          {sourceKindLabel(source.kind)}{source.size ? ` · ${sizeLabel(source.size)}` : ""} · {t(source.status === "ready" ? "study.analyzed" : "study.ready")}
+          {sourceKindLabel(source.kind)}{source.size ? ` · ${sizeLabel(source.size)}` : ""}
+          {source.pages ? ` · ${source.pages} ${t("study.pages")}` : ""}
         </span>
       </span>
-      <button className="icon-btn" aria-label={t("profiles.delete")} onClick={() => removeSource(source.id)}><Icon name="trash" /></button>
+      <button className="btn btn-ghost" onClick={onOpen}>{t("study.open")}</button>
+      <button className="icon-btn" aria-label={t("profiles.delete")}
+        onClick={() => { void removeSource(source.id).then(() => toast(t("study.sourceRemoved"))); }}><Icon name="trash" /></button>
+    </div>
+  );
+}
+
+function CoverageGrid({ source, onOpen }: { source: Source; onOpen: (page: number) => void }) {
+  const { t } = useTranslation();
+  const total = source.pages ?? 0;
+  const coverage = useCoverage(source.id, total);
+  if (!total) return null;
+  const explained = coverage.filter((s) => s !== "todo").length;
+  const mastered = coverage.filter((s) => s === "mastered").length;
+  return (
+    <div className="od-stack" style={gap("8px")}>
+      <div className="od-row" style={{ justifyContent: "space-between" }}>
+        <span className="muted small">{t("study.coverage", { done: mastered, total })}</span>
+        <span className="muted small">{t("study.explainedCount", { done: explained, total })}</span>
+      </div>
+      <div className="progress-track"><div className="progress-fill green" style={{ width: `${(mastered / total) * 100}%` }} /></div>
+      <div className="coverage-grid">
+        {coverage.map((status, i) => (
+          <button key={i} className={`cov-page ${status}`} onClick={() => onOpen(i + 1)}
+            aria-label={t(`study.status_${status}`, { page: i + 1 })} title={t(`study.status_${status}`)}>{i + 1}</button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -42,6 +89,7 @@ export function StudyHome() {
   const { go, profile } = useApp();
   const sources = useSources();
   const first = sources[0];
+  const totalPages = sources.reduce((n, s) => n + (s.pages ?? 0), 0);
   return (
     <div className="od-stack" style={gap("12px")}>
       <h1 className="section-title" style={{ marginTop: 24 }}>{t("study.title")}</h1>
@@ -53,14 +101,21 @@ export function StudyHome() {
           <b>{first ? first.name : t("study.noSources")}</b>
           <span className="muted small">{first ? t("study.continueDesc") : t("study.noSourcesDesc")}</span>
         </span>
-        <button className="btn btn-primary" onClick={() => go(first ? "roleplay" : "stories")}>
-          {t(first ? "study.continue" : "study.import")}
-        </button>
+        <button className="btn btn-primary" onClick={() => {
+          if (first) { openStudy(first.id, 1); go("roleplay"); } else go("stories");
+        }}>{t(first ? "study.continue" : "study.import")}</button>
       </div>
 
       <h2 className="section-title">{t("study.sources")}</h2>
       {sources.length ? (
-        <div className="od-stack" style={gap("10px")}>{sources.slice(0, 4).map((s) => <SourceRow key={s.id} source={s} />)}</div>
+        <div className="od-stack" style={gap("14px")}>
+          {sources.map((s) => (
+            <div className="card od-stack" key={s.id} style={gap("12px")}>
+              <SourceRow source={s} onOpen={() => { openStudy(s.id, 1); go("roleplay"); }} />
+              <CoverageGrid source={s} onOpen={(page) => { openStudy(s.id, page); go("roleplay"); }} />
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="card od-stack" style={gap("10px")}>
           <b>{t("study.noSources")}</b>
@@ -71,8 +126,9 @@ export function StudyHome() {
 
       <h2 className="section-title">{t("study.progress")}</h2>
       <div className="card">
-        <div className="progress-track"><div className="progress-fill green" style={{ width: `${profile && sources.length ? 2 : 0}%` }} /></div>
-        <p className="muted small" style={{ marginTop: 8 }}>{t("study.coverage", { done: 0, total: 0 })}</p>
+        <div className="progress-track"><div className="progress-fill green" style={{ width: `${sources.length ? 2 : 0}%` }} /></div>
+        <p className="muted small" style={{ marginTop: 8 }}>{t("study.coverage", { done: 0, total: totalPages })}</p>
+        {profile && <p className="muted small">{t("study.courseDesc", { native: profile.native_lang })}</p>}
       </div>
     </div>
   );
@@ -80,14 +136,32 @@ export function StudyHome() {
 
 export function StudyLibrary() {
   const { t } = useTranslation();
-  const { toast } = useApp();
+  const { go, toast } = useApp();
   const sources = useSources();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ name: string; page: number; total: number } | null>(null);
 
-  const addFiles = (files: FileList | null) => {
-    if (!files?.length) return;
-    for (const file of Array.from(files)) addSource({ name: file.name, kind: kindOf(file.name), size: file.size });
-    toast(t("study.sourceAdded"));
+  const handleFiles = async (files: FileList | File[] | null) => {
+    if (!files?.length || busy) return;
+    setBusy(true);
+    let added = 0;
+    try {
+      for (const file of Array.from(files)) {
+        setProgress(kindOf(file.name) === "pdf" ? { name: file.name, page: 0, total: 0 } : null);
+        try {
+          await importFile(file, (page, total) => setProgress({ name: file.name, page, total }));
+          added++;
+        } catch (e) {
+          toast(t("study.importFailed", { error: (e as Error).message }));
+        }
+      }
+      if (added) toast(t("study.importDone", { count: added }));
+    } finally {
+      setBusy(false);
+      setProgress(null);
+    }
   };
   const addLink = () => {
     const value = url.trim();
@@ -105,13 +179,22 @@ export function StudyLibrary() {
       <h1 className="section-title" style={{ marginTop: 24 }}>{t("study.library")}</h1>
       <p className="muted">{t("study.libraryDesc")}</p>
 
-      <div className="card od-stack" style={gap("12px")}>
-        <label className="btn btn-blue btn-block" style={{ cursor: "pointer" }}>
+      <div className="card od-stack" style={gap("12px")}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => { e.preventDefault(); void handleFiles(e.dataTransfer.files); }}>
+        <input ref={inputRef} type="file" multiple hidden
+          accept=".pdf,.doc,.docx,.rtf,.odt,image/*,video/*"
+          onChange={(e) => { void handleFiles(e.target.files); e.target.value = ""; }} />
+        <button className="btn btn-blue btn-block" disabled={busy} onClick={() => inputRef.current?.click()}>
           <Icon name="story" /> {t("study.addFile")}
-          <input type="file" multiple hidden accept=".pdf,.doc,.docx,.rtf,.odt,image/*,video/*"
-            onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
-        </label>
+        </button>
         <span className="muted small">{t("study.supported")}</span>
+        {progress && (
+          <div className="od-stack" style={gap("6px")} role="status">
+            <span className="small">{t("study.importing", { name: progress.name, page: progress.page, total: progress.total || "…" })}</span>
+            <div className="progress-track"><div className="progress-fill green" style={{ width: `${progress.total ? (progress.page / progress.total) * 100 : 10}%` }} /></div>
+          </div>
+        )}
         <div className="od-row" style={gap("8px")}>
           <input className="input od-fill" value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") addLink(); }}
             placeholder={t("study.linkPlaceholder")} aria-label={t("study.addLink")} />
@@ -119,19 +202,93 @@ export function StudyLibrary() {
         </div>
       </div>
 
-      {sources.length > 0 && <div className="od-stack" style={gap("10px")}>{sources.map((s) => <SourceRow key={s.id} source={s} />)}</div>}
+      {sources.length > 0 && <div className="od-stack" style={gap("10px")}>
+        {sources.map((s) => <SourceRow key={s.id} source={s} onOpen={() => { openStudy(s.id, 1); go("roleplay"); }} />)}
+      </div>}
     </div>
   );
 }
 
 export function StudyRoom() {
   const { t } = useTranslation();
-  const { go, profile } = useApp();
+  const { go, profile, ai, toast } = useApp();
   const sources = useSources();
-  const first = sources[0];
-  const [mic, setMic] = useState(true);
-  const [cam, setCam] = useState(false);
-  const [board, setBoard] = useState(true);
+  const session = useStudySession();
+  const source = sources.find((s) => s.id === session?.sourceId) ?? sources[0] ?? null;
+  const doc = useStoredDoc(source);
+  const total = source?.pages ?? doc?.pages ?? 1;
+  const page = Math.min(Math.max(session?.page ?? 1, 1), total);
+  const coverage = useCoverage(source?.id, total);
+  const status = coverage[page - 1] ?? "todo";
+  const pageText = doc?.texts[page - 1] ?? "";
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const paneRef = useRef<HTMLDivElement>(null);
+  const [explanation, setExplanation] = useState<PageExplanation | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [talking, setTalking] = useState(false);
+  const [err, setErr] = useState("");
+  const [q, setQ] = useState("");
+  const [chat, setChat] = useState<{ q: string; a: string }[]>([]);
+
+  useEffect(() => { setExplanation(null); setChat([]); setErr(""); }, [source?.id, page]);
+
+  // Draw the PDF page; re-draw when the pane is resized.
+  useEffect(() => {
+    if (!source?.pdfId || !doc) return;
+    const canvas = canvasRef.current, box = paneRef.current;
+    if (!canvas || !box) return;
+    let live = true;
+    const draw = () => {
+      if (!live) return;
+      void renderPage(source.pdfId!, doc.bytes, page, canvas, Math.max(220, box.clientWidth - 32)).catch(() => {});
+    };
+    draw();
+    const ro = new ResizeObserver(draw);
+    ro.observe(box);
+    return () => { live = false; ro.disconnect(); };
+  }, [source?.pdfId, doc, page]);
+
+  const context = source ? { title: source.name, page, total, text: pageText, native: profile?.native_lang ?? "fr" } : null;
+
+  const explain = async () => {
+    if (!context || !source) return;
+    if (!ai) { setErr(t("study.aiNeeded")); return; }
+    if (!pageText.trim()) { setErr(t("study.noText")); return; }
+    setBusy(true); setErr("");
+    try {
+      const result = await explainPage(context);
+      setExplanation(result);
+      await setCoveragePage(source.id, page, total, "explained");
+    } catch (e) { setErr((e as Error).message); }
+    finally { setBusy(false); }
+  };
+
+  const ask = async () => {
+    const question = q.trim();
+    if (!question || !context || busy) return;
+    setBusy(true); setErr("");
+    try {
+      const answer = await askPageQuestion(context, question);
+      setChat((c) => [...c, { q: question, a: answer }]);
+      setQ("");
+    } catch (e) { setErr((e as Error).message); }
+    finally { setBusy(false); }
+  };
+
+  const listen = () => {
+    if (!explanation || !profile) return;
+    setTalking(true);
+    void speak(explanation.explanation, profile.native_lang).catch(() => {}).finally(() => setTalking(false));
+  };
+
+  const mastered = async () => {
+    if (!source || !explanation) return;
+    await setCoveragePage(source.id, page, total, "mastered");
+    toast(t("study.mastered"));
+  };
+
+  const faceState = busy ? "thinking" : talking ? "talking" : "idle";
 
   return (
     <div className="od-stack" style={gap("12px")}>
@@ -143,7 +300,7 @@ export function StudyRoom() {
       <div className="card" style={{ padding: 8 }}>
         <div className="call-grid study-room">
           <section className="call-pane tutor" aria-label={t("study.tutor")}>
-            <Face spec={TUTOR.face} color={TUTOR.color} label={t("study.tutor")} state="idle" />
+            <Face spec={TUTOR.face} color={TUTOR.color} label={t("study.tutor")} state={faceState} />
             <b className="call-name">{t("study.tutor")}</b>
           </section>
 
@@ -154,35 +311,74 @@ export function StudyRoom() {
 
           <section className="call-pane study-source" aria-label={t("study.source")}>
             <span className="study-pane-title">{t("study.source")}</span>
-            <div className="study-doc">
-              <h3>{first ? first.name : t("study.noSource")}</h3>
-              {first ? <>
-                <p className="muted small">{sourceKindLabel(first.kind)} · {t("study.page")} 1</p>
-                {[92, 100, 86, 96, 70, 94, 88, 60].map((w, i) => <div key={i} className="study-line" style={{ width: `${w}%` }} />)}
-                <div className="study-doc-note">{t("study.analyze")}</div>
-              </> : <button className="btn btn-blue" onClick={() => go("stories")}>{t("study.import")}</button>}
+            <div className="study-doc" ref={paneRef}>
+              <div className="od-row" style={{ justifyContent: "space-between", gap: 8 }}>
+                <b className="study-doc-title">{source?.name ?? t("study.noSource")}</b>
+                {source?.pdfId && <span className="muted small od-nowrap">{page} / {total}</span>}
+              </div>
+              {source?.pdfId && doc ? (
+                <canvas ref={canvasRef} className="study-canvas" />
+              ) : (
+                <div className="od-stack" style={gap("10px")}>
+                  <p className="muted small">{source?.kind === "pdf" ? t("study.reimport") : t("study.noPdf")}</p>
+                  <button className="btn btn-blue" onClick={() => go("stories")}>{t("study.import")}</button>
+                </div>
+              )}
+              {source?.pdfId && (
+                <div className="od-row study-page-nav">
+                  <button className="btn btn-ghost" disabled={page <= 1} onClick={() => setStudyPage(page - 1)}>{t("study.previous")}</button>
+                  <span className={`cov-page ${status}`} title={t(`study.status_${status}`)}>{page}</span>
+                  <button className="btn btn-ghost" disabled={page >= total} onClick={() => setStudyPage(page + 1)}>{t("study.next")}</button>
+                </div>
+              )}
             </div>
           </section>
 
           <section className="call-pane study-board" aria-label={t("study.board")}>
-            <span className="study-pane-title">{t("study.board")}</span>
+            <span className="study-pane-title">{t("study.board")} · {t(`study.status_${status}`)}</span>
             <div className="study-board-inner">
-              {board ? <>
-                <div className="study-eq">∫₀¹ x² dx = [x³/3]₀¹ = 1/3</div>
-                <div className="study-step"><b>1.</b> {t("study.stepPrimitive")}</div>
-                <div className="study-step"><b>2.</b> {t("study.stepBounds")}</div>
-                <div className="study-step"><b>3.</b> {t("study.stepResult")}</div>
-                <div className="study-board-note">{t("study.boardNote")}</div>
-              </> : <p className="muted small">{t("study.emptyBoard")}</p>}
+              {err && (
+                <div className="study-error">
+                  <p>{err}</p>
+                  {!ai && <button className="btn btn-blue" onClick={() => go("settings")}>{t("ai.openSettings")}</button>}
+                </div>
+              )}
+              {!explanation && !busy && !err && <p className="muted small">{t("study.explainFirst")}</p>}
+              {busy && <p className="muted small study-thinking">{t("ai.thinking")}</p>}
+              {explanation && (
+                <div className="study-explain">
+                  <p>{explanation.explanation}</p>
+                  <b>{t("study.keyPoints")}</b>
+                  <ul>{explanation.keyPoints.map((k, i) => <li key={i}>{k}</li>)}</ul>
+                  {explanation.formulas.length > 0 && <>
+                    <b>{t("study.formulas")}</b>
+                    <div className="study-formulas">{explanation.formulas.map((f, i) => <code key={i}>{f}</code>)}</div>
+                  </>}
+                  <b>{t("study.check")}</b>
+                  {explanation.check.map((c, i) => (
+                    <details className="study-check" key={i}><summary>{c.question}</summary><p>{c.answer}</p></details>
+                  ))}
+                </div>
+              )}
+              {chat.length > 0 && <div className="study-qa">
+                {chat.map((m, i) => (
+                  <div key={i} className="study-qa-item"><b>{m.q}</b><p>{m.a}</p></div>
+                ))}
+              </div>}
+              <form className="od-row study-ask" onSubmit={(e) => { e.preventDefault(); void ask(); }}>
+                <input className="input od-fill" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("study.askPlaceholder")} aria-label={t("study.ask")} disabled={busy} />
+                <button className="icon-btn" type="submit" disabled={!q.trim() || busy} aria-label={t("study.send")}><Icon name="send" /></button>
+              </form>
             </div>
           </section>
         </div>
 
         <div className="call-bar" style={{ marginTop: 10 }}>
-          <button className={`call-btn ${mic ? "on" : "off"}`} aria-pressed={mic} aria-label={t("study.mic")} onClick={() => setMic((v) => !v)}><Icon name="mic" /></button>
-          <button className={`call-btn ${cam ? "on" : "off"}`} aria-pressed={cam} aria-label={t("study.cam")} onClick={() => setCam((v) => !v)}><Icon name="video" /></button>
-          <button className={`call-btn ${board ? "on" : ""}`} aria-pressed={board} aria-label={t("study.board")} onClick={() => setBoard((v) => !v)}><Icon name="book" /></button>
-          <button className="call-btn end" aria-label={t("study.end")} onClick={() => go("learn")}><Icon name="phone" /></button>
+          <button className="call-btn" aria-label={t("study.explain")} title={t("study.explain")} disabled={busy || !source} onClick={() => void explain()}><Icon name="spark" /></button>
+          <button className="call-btn" aria-label={t("study.listen")} title={t("study.listen")} disabled={!explanation || talking} onClick={listen}><Icon name="headphones" /></button>
+          <button className="call-btn" aria-label={t("study.markMastered")} title={t("study.markMastered")} disabled={!explanation} onClick={() => void mastered()}><Icon name="check" /></button>
+          <button className={`call-btn ${status !== "todo" ? "on" : ""}`} aria-label={t("study.board")} title={t("study.board")} disabled><Icon name="book" /></button>
+          <button className="call-btn end" aria-label={t("study.end")} title={t("study.end")} onClick={() => go("learn")}><Icon name="phone" /></button>
         </div>
       </div>
     </div>

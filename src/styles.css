@@ -772,3 +772,34 @@ html[data-theme="dark"] .garden-hero{background:var(--btd)}
   .study-room .call-pane { min-height: 200px; }
   .study-eq { font-size: 17px; }
 }
+
+/* Study: PDF page, coverage chips, explanation and Q&A inside the board pane. */
+.coverage-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.cov-page { min-width: 30px; height: 30px; padding: 0 6px; border: 2px solid var(--border); border-radius: 8px; background: var(--card); font-size: 12px; font-weight: 800; color: var(--text-muted); }
+.cov-page.explained { border-color: var(--blue); background: var(--sky); color: var(--blue-dark); }
+.cov-page.mastered { border-color: var(--green); background: var(--green-tint); color: var(--green-dark); }
+.study-canvas { display: block; width: 100%; height: auto; margin: 10px 0; border-radius: 8px; background: #fff; box-shadow: 0 0 0 1px var(--border); }
+.study-doc-title { overflow-wrap: anywhere; font-size: 14px; }
+.study-page-nav { justify-content: space-between; margin-top: 8px; }
+.study-explain { font-size: 14px; line-height: 1.55; }
+.study-explain p { margin: 0 0 10px; white-space: pre-wrap; }
+.study-explain b { display: block; margin: 12px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); }
+.study-explain ul { margin: 0; padding-left: 20px; }
+.study-explain li { margin: 4px 0; }
+.study-formulas { display: flex; flex-direction: column; gap: 6px; }
+.study-formulas code { display: block; padding: 8px 10px; border-radius: 8px; background: var(--surface); font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.study-check { padding: 8px 0; border-top: 1px dashed var(--border); }
+.study-check summary { cursor: pointer; font-weight: 700; }
+.study-check p { margin: 6px 0 0; color: var(--text-muted); }
+.study-qa { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.study-qa-item { padding: 8px 10px; border-radius: 10px; background: var(--surface); font-size: 13px; overflow-wrap: anywhere; }
+.study-qa-item p { margin: 4px 0 0; }
+.study-ask { position: sticky; bottom: 0; margin-top: 10px; padding-top: 8px; background: var(--card); }
+.study-error { margin-bottom: 10px; padding: 10px 12px; border-radius: 10px; background: var(--red-tint); border: 2px solid var(--red-tint-border); color: var(--red-dark); font-size: 13px; overflow-wrap: anywhere; }
+.study-error p { margin: 0 0 8px; }
+.study-thinking { animation: bob 1.2s ease-in-out infinite; }
+@media (max-width: 767px) {
+  .cov-page { min-width: 34px; height: 34px; }
+  .study-doc { padding-top: 44px; }
+  .study-ask { position: static; }
+}
