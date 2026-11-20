@@ -11,6 +11,7 @@ import { CourseFlag, NATIVE, ProfileForm, useLangName } from "./Profiles";
 import { notifyAllowed } from "../notify";
 import { betaOn, findUpdate, UpdateSheet } from "../Update";
 import { DataSection } from "./DataSettings";
+import { VisionRow } from "./VisionSettings";
 import { InfoTip, SttRow, TtsRow } from "./VoiceSettings";
 import { Icon, type IconName } from "../icons";
 import { HelpButton, HelpSheet, openLink } from "../Help";
@@ -408,6 +409,7 @@ export function Settings() {
                 : <span className="small" style={{ color: "var(--orange)", fontWeight: 800 }}>{t("ai.notSet")}</span>}</span>
             <button className={`btn ${ai ? "btn-ghost" : "btn-primary"}`} onClick={() => openSheet(<AiSheet />)}>{t(ai ? "settings.change" : "ai.setUp")}</button>
           </div>
+          <VisionRow />
           <TtsRow />
           <SttRow />
         </>}

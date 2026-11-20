@@ -213,6 +213,18 @@ export function generatePlain(system: string, prompt: string) {
   });
 }
 
+/** Vision call with an explicit config (not the active text provider): page image + prompt → text. */
+export async function generateImage(cfg: AiConfig, key: string | null, system: string, prompt: string, image: Uint8Array, mediaType: string): Promise<string> {
+  const r = await generateText({
+    model: model(cfg, key),
+    system,
+    messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image", image, mediaType }] }],
+    maxRetries: 1,
+    abortSignal: AbortSignal.timeout(120_000),
+  });
+  return r.text.trim();
+}
+
 /** First-run setup suggests this when Ollama runs without models. ponytail: one fixed pick, a size-aware list if people ask */
 export const RECOMMENDED_OLLAMA = { model: "qwen3:8b", size: "5.2 GB" };
 

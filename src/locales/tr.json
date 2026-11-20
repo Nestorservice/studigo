@@ -1138,7 +1138,13 @@
     "gardenDesc": "Ağacın öğrenilen sayfalarla, ders ders büyür.",
     "treeHint": "Her öğrenilen sayfa ağacı büyütür; günlük kökler onu yeşil tutar.",
     "askVoice": "Sesle sor",
-    "subject": "Ders"
+    "subject": "Ders",
+    "ocr": "Bu sayfayı OCR yap",
+    "vision": "Görü (şemalar)",
+    "ocrProgress": "OCR… %{{pct}}",
+    "ocrDone": "Metin görselden çıkarıldı",
+    "ocrFailed": "OCR başarısız: {{error}}",
+    "visionNeeded": "Ayarlarda bir görü modeli kur (Gemini, OpenAI, Anthropic veya Ollama)."
   },
   "studyNudge": {
     "morning": {
@@ -1161,5 +1167,17 @@
       "t": "Dersin seni bekliyor",
       "b": "İstediğin zaman dön; kaldığın yerden devam ederiz."
     }
+  },
+  "vision": {
+    "title": "Görü (şemalar ve formüller)",
+    "desc": "Çok modlu bir model şemaları, el yazısı formülleri ve taranmış sayfaları okur. Metin modelinden ayrıdır.",
+    "notSet": "Yapılandırılmadı — DeepSeek görselleri göremez",
+    "provider": "Görü sağlayıcısı",
+    "baseURL": "Sunucu adresi",
+    "model": "Görü modeli",
+    "modelDesc": "Görsel kabul eden bir model (Gemini, GPT-4o/4.1, Claude, LLaVA/Qwen-VL…)",
+    "apiKey": "Görü API anahtarı",
+    "saved": "Görü modeli kaydedildi",
+    "hint": "Metin modeli DeepSeek olarak kalır; görü yalnızca Görü düğmesine basınca kullanılır."
   }
 }

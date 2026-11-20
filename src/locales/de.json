@@ -1144,7 +1144,13 @@
     "gardenDesc": "Dein Baum wächst mit den beherrschten Seiten, Fach für Fach.",
     "treeHint": "Jede beherrschte Seite lässt den Baum wachsen; tägliche Wurzeln halten ihn grün.",
     "askVoice": "Per Stimme fragen",
-    "subject": "Fach"
+    "subject": "Fach",
+    "ocr": "OCR dieser Seite",
+    "vision": "Vision (Diagramme)",
+    "ocrProgress": "OCR… {{pct}} %",
+    "ocrDone": "Text aus dem Bild extrahiert",
+    "ocrFailed": "OCR fehlgeschlagen: {{error}}",
+    "visionNeeded": "Richte ein Vision-Modell in den Einstellungen ein (Gemini, OpenAI, Anthropic oder Ollama)."
   },
   "studyNudge": {
     "morning": {
@@ -1167,5 +1173,17 @@
       "t": "Dein Kurs wartet",
       "b": "Komm zurück, wann du willst; wir machen dort weiter."
     }
+  },
+  "vision": {
+    "title": "Vision (Diagramme und Formeln)",
+    "desc": "Ein multimodales Modell liest Diagramme, handschriftliche Formeln und gescannte Seiten. Es ist vom Textmodell getrennt.",
+    "notSet": "Nicht konfiguriert — DeepSeek sieht keine Bilder",
+    "provider": "Vision-Anbieter",
+    "baseURL": "Serveradresse",
+    "model": "Vision-Modell",
+    "modelDesc": "Ein Modell, das Bilder akzeptiert (Gemini, GPT-4o/4.1, Claude, LLaVA/Qwen-VL…)",
+    "apiKey": "Vision-API-Schlüssel",
+    "saved": "Vision-Modell gespeichert",
+    "hint": "Das Textmodell bleibt DeepSeek; Vision wird nur beim Klick auf Vision verwendet."
   }
 }

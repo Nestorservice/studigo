@@ -6,10 +6,13 @@ import { useApp } from "../store";
 import { Face } from "../face/Face";
 import { CHARACTERS } from "../characters";
 import { Avatar } from "./Profiles";
-import { getDoc, getExplanation, listCoverage, saveExplanation, setCoveragePage, useCoverage, useExplanations, type ExplanationRecord, type StoredDoc } from "../study/store";
+import { getDoc, getExplanation, listCoverage, saveDoc, saveExplanation, setCoveragePage, useCoverage, useExplanations, type ExplanationRecord, type StoredDoc } from "../study/store";
 import { renderPage } from "../study/pdf";
+import { ocrCanvas } from "../study/ocr";
+import { loadVision, type VisionConfig } from "../study/vision";
+import { getKey } from "../ai";
 import { openStudy, setStudyPage, useStudySession } from "../study/session";
-import { askPageQuestion, explainPage, type PageExplanation } from "../study/ai";
+import { askPageQuestion, explainImage, explainPage, type PageExplanation } from "../study/ai";
 import {
   addSource, importFile, kindOf, loadSources, removeSource, sourceKindLabel, useSources, youtube,
   type Source, type SourceKind,
@@ -324,7 +327,8 @@ export function StudyRoom() {
   const page = Math.min(Math.max(session?.page ?? 1, 1), total);
   const coverage = useCoverage(source?.id, total);
   const status = coverage[page - 1] ?? "todo";
-  const pageText = doc?.texts[page - 1] ?? "";
+  const [ocrText, setOcrText] = useState<string | null>(null);
+  const pageText = ocrText ?? doc?.texts[page - 1] ?? "";
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const paneRef = useRef<HTMLDivElement>(null);
@@ -335,6 +339,10 @@ export function StudyRoom() {
   const [q, setQ] = useState("");
   const [chat, setChat] = useState<{ q: string; a: string }[]>([]);
   const [recording, setRecording] = useState<Recording | null>(null);
+  const [ocrBusy, setOcrBusy] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [vision, setVision] = useState<VisionConfig | null>(null);
+  useEffect(() => { loadVision().then(setVision).catch(() => {}); }, []);
 
   const award = (xp: number, kind: "lesson" | "practice") => {
     gainXp(xp);
@@ -342,7 +350,7 @@ export function StudyRoom() {
   };
 
   useEffect(() => {
-    setExplanation(null); setChat([]); setErr("");
+    setExplanation(null); setChat([]); setErr(""); setOcrText(null); setOcrProgress(0);
     if (!source) return;
     let live = true;
     getExplanation(source.id, page).then((saved) => { if (live && saved) setExplanation(saved); }).catch(() => {});
@@ -441,6 +449,46 @@ export function StudyRoom() {
     } catch (e) { toast((e as Error).message); }
   };
 
+  const runOcr = async () => {
+    if (!source?.pdfId || !doc || !profile || ocrBusy) return;
+    setOcrBusy(true); setOcrProgress(0); setErr("");
+    try {
+      const canvas = document.createElement("canvas");
+      await renderPage(source.pdfId, doc.bytes, page, canvas, 1800);
+      const text = await ocrCanvas(canvas, profile.native_lang, setOcrProgress);
+      setOcrText(text);
+      await saveDoc({ ...doc, texts: doc.texts.map((t, i) => (i === page - 1 ? text : t)) });
+      toast(t("study.ocrDone"));
+    } catch (e) { setErr(t("study.ocrFailed", { error: (e as Error).message })); }
+    finally { setOcrBusy(false); setOcrProgress(0); }
+  };
+
+  const runVision = async () => {
+    if (!context || !source?.pdfId || !doc || busy) return;
+    if (!vision) { setErr(t("study.visionNeeded")); return; }
+    setBusy(true); setErr("");
+    try {
+      const canvas = document.createElement("canvas");
+      await renderPage(source.pdfId, doc.bytes, page, canvas, 1800);
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("Could not render the page as an image");
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const result = await explainImage(
+        { provider: vision.provider, baseURL: vision.baseURL, model: vision.model },
+        await getKey(vision.provider),
+        context, bytes, "image/png",
+      );
+      const saved = await saveExplanation({
+        sourceId: source.id, page,
+        explanation: result.explanation, keyPoints: result.keyPoints, formulas: result.formulas, check: result.check,
+      });
+      setExplanation(saved);
+      await setCoveragePage(source.id, page, total, "explained");
+      if (status === "todo") award(5, "practice");
+    } catch (e) { setErr((e as Error).message); }
+    finally { setBusy(false); }
+  };
+
   const faceState = busy ? "thinking" : talking ? "talking" : "idle";
 
   return (
@@ -498,6 +546,7 @@ export function StudyRoom() {
               )}
               {!explanation && !busy && !err && <p className="muted small">{t("study.explainFirst")}</p>}
               {busy && <p className="muted small study-thinking">{t("ai.thinking")}</p>}
+              {ocrBusy && <p className="muted small study-thinking">{t("study.ocrProgress", { pct: Math.round(ocrProgress * 100) })}</p>}
               {explanation && (
                 <div className="study-explain">
                   <p>{explanation.explanation}</p>
@@ -539,7 +588,8 @@ export function StudyRoom() {
           <button className="call-btn" aria-label={t("study.explain")} title={t("study.explain")} disabled={busy || !source} onClick={() => void explain()}><Icon name="spark" /></button>
           <button className="call-btn" aria-label={t("study.listen")} title={t("study.listen")} disabled={!explanation || talking} onClick={listen}><Icon name="headphones" /></button>
           <button className="call-btn" aria-label={t("study.markMastered")} title={t("study.markMastered")} disabled={!explanation} onClick={() => void mastered()}><Icon name="check" /></button>
-          <button className={`call-btn ${status !== "todo" ? "on" : ""}`} aria-label={t("study.board")} title={t("study.board")} disabled><Icon name="book" /></button>
+          <button className="call-btn" aria-label={t("study.ocr")} title={t("study.ocr")} disabled={ocrBusy || !doc} onClick={() => void runOcr()}><Icon name="book" /></button>
+          <button className="call-btn" aria-label={t("study.vision")} title={t("study.vision")} disabled={busy || !doc} onClick={() => void runVision()}><Icon name="eye" /></button>
           <button className="call-btn end" aria-label={t("study.end")} title={t("study.end")} onClick={() => go("learn")}><Icon name="phone" /></button>
         </div>
       </div>

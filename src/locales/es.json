@@ -1176,7 +1176,13 @@
     "gardenDesc": "Tu árbol crece con las páginas dominadas, materia por materia.",
     "treeHint": "Cada página dominada hace crecer el árbol; las raíces diarias lo mantienen verde.",
     "askVoice": "Preguntar por voz",
-    "subject": "Materia"
+    "subject": "Materia",
+    "ocr": "OCR de esta página",
+    "vision": "Visión (esquemas)",
+    "ocrProgress": "OCR… {{pct}} %",
+    "ocrDone": "Texto extraído de la imagen",
+    "ocrFailed": "OCR imposible: {{error}}",
+    "visionNeeded": "Configura un modelo de visión en Ajustes (Gemini, OpenAI, Anthropic u Ollama)."
   },
   "studyNudge": {
     "morning": {
@@ -1199,5 +1205,17 @@
       "t": "Tu curso te espera",
       "b": "Vuelve cuando quieras; retomamos donde lo dejaste."
     }
+  },
+  "vision": {
+    "title": "Visión (esquemas y fórmulas)",
+    "desc": "Un modelo multimodal lee esquemas, fórmulas manuscritas y páginas escaneadas. Es independiente del modelo de texto.",
+    "notSet": "No configurado — DeepSeek no ve imágenes",
+    "provider": "Proveedor de visión",
+    "baseURL": "Dirección del servidor",
+    "model": "Modelo de visión",
+    "modelDesc": "Un modelo que acepta imágenes (Gemini, GPT-4o/4.1, Claude, LLaVA/Qwen-VL…)",
+    "apiKey": "Clave API de visión",
+    "saved": "Modelo de visión guardado",
+    "hint": "El modelo de texto sigue siendo DeepSeek; la visión solo se usa al pulsar Visión."
   }
 }

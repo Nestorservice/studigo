@@ -1144,7 +1144,13 @@
     "gardenDesc": "Your tree grows with mastered pages, subject by subject.",
     "treeHint": "Every mastered page grows the tree; daily roots keep it green.",
     "askVoice": "Ask by voice",
-    "subject": "Subject"
+    "subject": "Subject",
+    "ocr": "OCR this page",
+    "vision": "Vision (diagrams)",
+    "ocrProgress": "OCR… {{pct}}%",
+    "ocrDone": "Text extracted from the image",
+    "ocrFailed": "OCR failed: {{error}}",
+    "visionNeeded": "Set up a vision model in Settings (Gemini, OpenAI, Anthropic or Ollama)."
   },
   "studyNudge": {
     "morning": {
@@ -1167,5 +1173,17 @@
       "t": "Your course is waiting",
       "b": "Come back whenever you want; we'll pick up where you left off."
     }
+  },
+  "vision": {
+    "title": "Vision (diagrams and formulas)",
+    "desc": "A multimodal model reads diagrams, handwritten formulas and scanned pages. It is separate from the text model.",
+    "notSet": "Not configured — DeepSeek cannot see images",
+    "provider": "Vision provider",
+    "baseURL": "Server address",
+    "model": "Vision model",
+    "modelDesc": "A model that accepts images (Gemini, GPT-4o/4.1, Claude, LLaVA/Qwen-VL…)",
+    "apiKey": "Vision API key",
+    "saved": "Vision model saved",
+    "hint": "Your text model stays DeepSeek; vision is only used when you press Vision."
   }
 }

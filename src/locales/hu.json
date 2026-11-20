@@ -1144,7 +1144,13 @@
     "gardenDesc": "A fád az elsajátított oldalakkal nő, tantárgyanként.",
     "treeHint": "Minden elsajátított oldal növeszti a fát; a napi gyökerek zölden tartják.",
     "askVoice": "Kérdés hanggal",
-    "subject": "Tantárgy"
+    "subject": "Tantárgy",
+    "ocr": "Oldal OCR",
+    "vision": "Vision (ábrák)",
+    "ocrProgress": "OCR… {{pct}}%",
+    "ocrDone": "Szöveg kinyerve a képből",
+    "ocrFailed": "Az OCR nem sikerült: {{error}}",
+    "visionNeeded": "Állíts be egy vision modellt a beállításokban (Gemini, OpenAI, Anthropic vagy Ollama)."
   },
   "studyNudge": {
     "morning": {
@@ -1167,5 +1173,17 @@
       "t": "A kurzusod vár",
       "b": "Gyere vissza, amikor akarsz; onnan folytatjuk."
     }
+  },
+  "vision": {
+    "title": "Vision (ábrák és képletek)",
+    "desc": "Egy multimodális modell olvassa az ábrákat, kézzel írt képleteket és beszkennelt oldalakat. A szöveges modelltől külön működik.",
+    "notSet": "Nincs beállítva — a DeepSeek nem lát képeket",
+    "provider": "Vision szolgáltató",
+    "baseURL": "Szerver címe",
+    "model": "Vision modell",
+    "modelDesc": "Képeket elfogadó modell (Gemini, GPT-4o/4.1, Claude, LLaVA/Qwen-VL…)",
+    "apiKey": "Vision API-kulcs",
+    "saved": "Vision modell mentve",
+    "hint": "A szöveges modell marad a DeepSeek; a vision csak a Vision gombnál használatos."
   }
 }
