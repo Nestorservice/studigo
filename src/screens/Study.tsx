@@ -6,7 +6,7 @@ import { useApp } from "../store";
 import { Face } from "../face/Face";
 import { CHARACTERS } from "../characters";
 import { Avatar } from "./Profiles";
-import { getDoc, setCoveragePage, useCoverage, type StoredDoc } from "../study/store";
+import { getDoc, getExplanation, saveExplanation, setCoveragePage, useCoverage, useExplanations, type ExplanationRecord, type StoredDoc } from "../study/store";
 import { renderPage } from "../study/pdf";
 import { openStudy, setStudyPage, useStudySession } from "../study/session";
 import { askPageQuestion, explainPage, type PageExplanation } from "../study/ai";
@@ -231,7 +231,13 @@ export function StudyRoom() {
   const [q, setQ] = useState("");
   const [chat, setChat] = useState<{ q: string; a: string }[]>([]);
 
-  useEffect(() => { setExplanation(null); setChat([]); setErr(""); }, [source?.id, page]);
+  useEffect(() => {
+    setExplanation(null); setChat([]); setErr("");
+    if (!source) return;
+    let live = true;
+    getExplanation(source.id, page).then((saved) => { if (live && saved) setExplanation(saved); }).catch(() => {});
+    return () => { live = false; };
+  }, [source?.id, page]);
 
   // Draw the PDF page; re-draw when the pane is resized.
   useEffect(() => {
@@ -258,7 +264,11 @@ export function StudyRoom() {
     setBusy(true); setErr("");
     try {
       const result = await explainPage(context);
-      setExplanation(result);
+      const saved = await saveExplanation({
+        sourceId: source.id, page,
+        explanation: result.explanation, keyPoints: result.keyPoints, formulas: result.formulas, check: result.check,
+      });
+      setExplanation(saved);
       await setCoveragePage(source.id, page, total, "explained");
     } catch (e) { setErr((e as Error).message); }
     finally { setBusy(false); }
@@ -387,41 +397,83 @@ export function StudyRoom() {
 
 export function StudyPractice() {
   const { t } = useTranslation();
-  const rows: { icon: IconName; title: string; desc: string }[] = [
-    { icon: "dumbbell", title: t("study.practiceGuided"), desc: t("study.practiceGuidedDesc") },
-    { icon: "spark", title: t("study.practiceChallenge"), desc: t("study.practiceChallengeDesc") },
-    { icon: "refresh", title: t("study.practiceReview"), desc: t("study.practiceReviewDesc") },
-  ];
+  const { toast } = useApp();
+  const sources = useSources();
+  const explanations = useExplanations();
+
+  const mark = async (e: ExplanationRecord) => {
+    const source = sources.find((s) => s.id === e.sourceId);
+    await setCoveragePage(e.sourceId, e.page, source?.pages ?? e.page, "mastered");
+    toast(t("study.mastered"));
+  };
+
   return (
     <div className="od-stack" style={gap("12px")}>
       <h1 className="section-title" style={{ marginTop: 24 }}>{t("study.exercises")}</h1>
       <p className="muted">{t("study.exercisesDesc")}</p>
-      {rows.map((r) => (
-        <div className="card od-row" key={r.title} style={gap("14px")}>
-          <span className="voice-icon" style={{ color: "var(--blue)" }}><Icon name={r.icon} /></span>
-          <span className="od-field od-fill"><b>{r.title}</b><span className="muted small">{r.desc}</span></span>
-          <span className="muted small">{t("study.soon")}</span>
+      {explanations.length === 0 ? (
+        <div className="card od-stack" style={gap("8px")}>
+          <b>{t("study.noExplanations")}</b>
+          <p className="muted small">{t("study.explainFirst")}</p>
         </div>
-      ))}
+      ) : (
+        <div className="od-stack" style={gap("12px")}>
+          {explanations.map((e) => {
+            const source = sources.find((s) => s.id === e.sourceId);
+            return (
+              <div className="card od-stack" key={e.key} style={gap("10px")}>
+                <div className="od-row" style={{ justifyContent: "space-between" }}>
+                  <span className="od-field od-fill">
+                    <b style={{ overflowWrap: "anywhere" }}>{source?.name ?? t("study.source")}</b>
+                    <span className="muted small">{t("study.page")} {e.page}</span>
+                  </span>
+                  <button className="btn btn-ghost" onClick={() => void mark(e)}>{t("study.markMastered")}</button>
+                </div>
+                {e.check.map((c, i) => (
+                  <details className="study-check" key={i}><summary>{c.question}</summary><p>{c.answer}</p></details>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
 export function StudySheets() {
   const { t } = useTranslation();
+  const sources = useSources();
+  const explanations = useExplanations();
+  const withContent = explanations.filter((e) => e.formulas.length > 0 || e.keyPoints.length > 0);
   return (
     <div className="od-stack" style={gap("12px")}>
       <h1 className="section-title" style={{ marginTop: 24 }}>{t("study.sheets")}</h1>
       <p className="muted">{t("study.sheetsDesc")}</p>
-      <div className="card od-stack" style={gap("8px")}>
-        <b>{t("study.sheetFormulas")}</b>
-        <span className="study-eq" style={{ fontSize: 18 }}>f'(x) = lim h→0 (f(x+h) − f(x)) / h</span>
-      </div>
-      <div className="card od-stack" style={gap("8px")}>
-        <b>{t("study.sheetDefinitions")}</b>
-        <p className="muted small">{t("study.sheetDefinitionsDesc")}</p>
-      </div>
-      <span className="muted small">{t("study.soon")}</span>
+      {withContent.length === 0 ? (
+        <div className="card od-stack" style={gap("8px")}>
+          <b>{t("study.noExplanations")}</b>
+          <p className="muted small">{t("study.explainFirst")}</p>
+        </div>
+      ) : withContent.map((e) => {
+        const source = sources.find((s) => s.id === e.sourceId);
+        return (
+          <div className="card od-stack" key={e.key} style={gap("8px")}>
+            <div className="od-row" style={{ justifyContent: "space-between" }}>
+              <b style={{ overflowWrap: "anywhere" }}>{source?.name ?? t("study.source")}</b>
+              <span className="muted small">{t("study.page")} {e.page}</span>
+            </div>
+            {e.formulas.length > 0 && <>
+              <b>{t("study.sheetFormulas")}</b>
+              <div className="study-formulas">{e.formulas.map((f, i) => <code key={i}>{f}</code>)}</div>
+            </>}
+            {e.keyPoints.length > 0 && <>
+              <b>{t("study.keyPoints")}</b>
+              <ul className="study-explain" style={{ margin: 0, paddingLeft: 20 }}>{e.keyPoints.map((k, i) => <li key={i}>{k}</li>)}</ul>
+            </>}
+          </div>
+        );
+      })}
     </div>
   );
 }

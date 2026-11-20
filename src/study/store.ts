@@ -4,13 +4,24 @@ import { useEffect, useState } from "react";
 
 export type PageStatus = "todo" | "explained" | "mastered";
 export type StoredDoc = { id: string; bytes: ArrayBuffer; texts: string[]; pages: number };
+export type ExplanationRecord = {
+  key: string;
+  sourceId: string;
+  page: number;
+  explanation: string;
+  keyPoints: string[];
+  formulas: string[];
+  check: { question: string; answer: string }[];
+  createdAt: number;
+};
 type CoverageRow = { sourceId: string; statuses: PageStatus[] };
 
 const DB_NAME = "studigo-study";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 let dbp: Promise<IDBDatabase> | null = null;
 const memoryDocs = new Map<string, StoredDoc>();
 const memoryCoverage = new Map<string, PageStatus[]>();
+const memoryExplanations = new Map<string, ExplanationRecord>();
 
 function openDb(): Promise<IDBDatabase> {
   if (dbp) return dbp;
@@ -21,6 +32,7 @@ function openDb(): Promise<IDBDatabase> {
       const db = req.result;
       if (!db.objectStoreNames.contains("docs")) db.createObjectStore("docs", { keyPath: "id" });
       if (!db.objectStoreNames.contains("coverage")) db.createObjectStore("coverage", { keyPath: "sourceId" });
+      if (!db.objectStoreNames.contains("explanations")) db.createObjectStore("explanations", { keyPath: "key" });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error ?? new Error("IndexedDB open failed"));
@@ -60,6 +72,8 @@ export async function deleteDoc(id: string): Promise<void> {
   } catch { /* memory only */ }
   memoryDocs.delete(id);
   memoryCoverage.delete(id);
+  const exps = await listExplanations();
+  for (const e of exps.filter((x) => x.sourceId === id)) await deleteExplanation(e.key);
 }
 
 const pad = (s: PageStatus[] | undefined, pages: number): PageStatus[] =>
@@ -105,4 +119,58 @@ export function useCoverage(sourceId: string | null | undefined, pages: number) 
     return () => { live = false; window.removeEventListener("studigo:coverage", load); };
   }, [sourceId, pages]);
   return coverage;
+}
+
+const explanationKey = (sourceId: string, page: number) => `${sourceId}:${page}`;
+
+export async function saveExplanation(record: Omit<ExplanationRecord, "key" | "createdAt">): Promise<ExplanationRecord> {
+  const full: ExplanationRecord = { ...record, key: explanationKey(record.sourceId, record.page), createdAt: Date.now() };
+  try {
+    const db = await openDb();
+    const tx = db.transaction("explanations", "readwrite");
+    tx.objectStore("explanations").put(full);
+    await new Promise<void>((resolve, reject) => { tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); });
+  } catch { memoryExplanations.set(full.key, full); }
+  window.dispatchEvent(new Event("studigo:explanations"));
+  return full;
+}
+
+export async function getExplanation(sourceId: string, page: number): Promise<ExplanationRecord | null> {
+  const key = explanationKey(sourceId, page);
+  try {
+    const db = await openDb();
+    const row = await request(db.transaction("explanations").objectStore("explanations").get(key));
+    return (row as ExplanationRecord | undefined) ?? memoryExplanations.get(key) ?? null;
+  } catch { return memoryExplanations.get(key) ?? null; }
+}
+
+export async function listExplanations(): Promise<ExplanationRecord[]> {
+  try {
+    const db = await openDb();
+    const rows = (await request(db.transaction("explanations").objectStore("explanations").getAll())) as ExplanationRecord[];
+    return rows.sort((a, b) => b.createdAt - a.createdAt);
+  } catch { return [...memoryExplanations.values()].sort((a, b) => b.createdAt - a.createdAt); }
+}
+
+export async function deleteExplanation(key: string): Promise<void> {
+  try {
+    const db = await openDb();
+    const tx = db.transaction("explanations", "readwrite");
+    tx.objectStore("explanations").delete(key);
+    await new Promise<void>((resolve) => { tx.oncomplete = () => resolve(); tx.onerror = () => resolve(); });
+  } catch { /* memory only */ }
+  memoryExplanations.delete(key);
+  window.dispatchEvent(new Event("studigo:explanations"));
+}
+
+export function useExplanations() {
+  const [rows, setRows] = useState<ExplanationRecord[]>([]);
+  useEffect(() => {
+    let live = true;
+    const load = () => listExplanations().then((x) => { if (live) setRows(x); });
+    void load();
+    window.addEventListener("studigo:explanations", load);
+    return () => { live = false; window.removeEventListener("studigo:explanations", load); };
+  }, []);
+  return rows;
 }

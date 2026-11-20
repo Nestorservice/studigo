@@ -1119,6 +1119,7 @@
     "ask": "Soru sor",
     "askPlaceholder": "Bu sayfa hakkında bir soru…",
     "send": "Gönder",
-    "aiNeeded": "Önce ayarlardan bir yapay zekâ sağlayıcısı kur."
+    "aiNeeded": "Önce ayarlardan bir yapay zekâ sağlayıcısı kur.",
+    "noExplanations": "Henüz kaydedilmiş açıklama yok. Bir sayfa aç ve „Bu sayfayı açıkla” düğmesine bas."
   }
 }

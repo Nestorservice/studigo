@@ -1125,6 +1125,7 @@
     "ask": "Frage stellen",
     "askPlaceholder": "Eine Frage zu dieser Seite…",
     "send": "Senden",
-    "aiNeeded": "Richte zuerst einen KI-Anbieter in den Einstellungen ein."
+    "aiNeeded": "Richte zuerst einen KI-Anbieter in den Einstellungen ein.",
+    "noExplanations": "Noch keine gespeicherten Erklärungen. Öffne eine Seite und klicke auf „Diese Seite erklären“."
   }
 }

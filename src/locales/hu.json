@@ -1125,6 +1125,7 @@
     "ask": "Kérdés feltevése",
     "askPlaceholder": "Kérdés erről az oldalról…",
     "send": "Küldés",
-    "aiNeeded": "Előbb állíts be egy MI-szolgáltatót a beállításokban."
+    "aiNeeded": "Előbb állíts be egy MI-szolgáltatót a beállításokban.",
+    "noExplanations": "Még nincs mentett magyarázat. Nyiss meg egy oldalt, és nyomd meg az „Oldal magyarázata” gombot."
   }
 }

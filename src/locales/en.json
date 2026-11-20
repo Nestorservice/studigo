@@ -1125,6 +1125,7 @@
     "ask": "Ask a question",
     "askPlaceholder": "A question about this page…",
     "send": "Send",
-    "aiNeeded": "Set up an AI provider in Settings first."
+    "aiNeeded": "Set up an AI provider in Settings first.",
+    "noExplanations": "No saved explanations yet. Open a page and press “Explain this page”."
   }
 }

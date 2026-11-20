@@ -1157,6 +1157,7 @@
     "ask": "Hacer una pregunta",
     "askPlaceholder": "Una pregunta sobre esta página…",
     "send": "Enviar",
-    "aiNeeded": "Configura primero un proveedor de IA en Ajustes."
+    "aiNeeded": "Configura primero un proveedor de IA en Ajustes.",
+    "noExplanations": "Aún no hay explicaciones guardadas. Abre una página y pulsa «Explicar esta página»."
   }
 }
