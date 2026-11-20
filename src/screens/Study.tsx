@@ -163,6 +163,7 @@ export function StudyHome() {
   const { go, profile } = useApp();
   const sources = useSources();
   const subjects = useSubjects();
+  const { mastered, total } = useStudyTotals();
   const first = sources[0];
   const totalPages = sources.reduce((n, s) => n + (s.pages ?? 0), 0);
   return (
@@ -207,8 +208,8 @@ export function StudyHome() {
 
       <h2 className="section-title">{t("study.progress")}</h2>
       <div className="card">
-        <div className="progress-track"><div className="progress-fill green" style={{ width: `${sources.length ? 2 : 0}%` }} /></div>
-        <p className="muted small" style={{ marginTop: 8 }}>{t("study.coverage", { done: 0, total: totalPages })}</p>
+        <div className="progress-track"><div className="progress-fill green" style={{ width: `${total ? (mastered / total) * 100 : 0}%` }} /></div>
+        <p className="muted small" style={{ marginTop: 8 }}>{t("study.coverage", { done: mastered, total: total || totalPages })}</p>
         {profile && <p className="muted small">{t("study.courseDesc", { native: profile.native_lang })}</p>}
       </div>
     </div>
