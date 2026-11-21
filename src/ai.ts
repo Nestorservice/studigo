@@ -82,7 +82,9 @@ function model(c: AiConfig, key: string | null): LanguageModel {
     case "deepseek": return createOpenAICompatible({ name: "deepseek", baseURL, apiKey, fetch: http }).chatModel(c.model);
     // Nestor Cloud normalizes every provider behind an OpenAI-compatible gateway. The token is a learner
     // credential, not a provider key; provider keys never reach this device.
-    case "nestor": return createOpenAICompatible({ name: "nestor", baseURL, apiKey, fetch: http }).chatModel(c.model);
+    case "nestor": return createOpenAICompatible({
+      name: "nestor", baseURL, apiKey, fetch: http, headers: { "x-project": "studigo" },
+    }).chatModel(c.model);
     case "anthropic": return createAnthropic({ apiKey, baseURL, fetch: http, headers: { "anthropic-dangerous-direct-browser-access": "true" } })(c.model);
     case "gemini": return createGoogle({ apiKey, baseURL, fetch: http })(c.model);
     // Compatible, not createOpenAI: that one may use the Responses API, which OpenRouter's chat models don't all speak.
@@ -101,7 +103,8 @@ export async function listModels(c: AiConfig, key: string | null): Promise<strin
   switch (c.provider) {
     case "ollama": return (await get(`${base}/api/tags`)).models.map((m: any) => m.name);
     case "lmstudio": return (await get(`${base}/models`)).data.map((m: any) => m.id);
-    case "openai": case "openrouter": case "deepseek": case "nestor": return (await get(`${base}/models`, { Authorization: `Bearer ${key}` })).data.map((m: any) => m.id).sort();
+    case "openai": case "openrouter": case "deepseek": return (await get(`${base}/models`, { Authorization: `Bearer ${key}` })).data.map((m: any) => m.id).sort();
+    case "nestor": return (await get(`${base}/models`, { Authorization: `Bearer ${key}`, "x-project": "studigo" })).data.map((m: any) => m.id).sort();
     case "anthropic": return (await get(`${base}/models`, { "x-api-key": key ?? "", "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" })).data.map((m: any) => m.id);
     case "gemini": return (await get(`${base}/models?key=${encodeURIComponent(key ?? "")}`)).models
       .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent")).map((m: any) => m.name.replace(/^models\//, ""));
