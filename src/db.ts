@@ -37,7 +37,8 @@ export const isCompanion = !isTauri && location.hostname.endsWith(".ts.net");
 function db() {
   return (dbP ??= (async () => {
     if (isCompanion) return remoteDb(); // the desktop already migrated it
-    const d = await (isTauri ? openTauriDb() : import.meta.env.DEV ? browserDb() : Promise.reject(new Error("Studigo needs the Tauri shell")));
+    // The web build uses the same SQLite schema on sql.js, persisted per browser origin.
+    const d = await (isTauri ? openTauriDb() : import.meta.env.DEV || import.meta.env.VITE_WEB === "1" ? browserDb() : Promise.reject(new Error("Studigo needs the Tauri shell")));
     await runMigrations(d, MIGRATIONS, isTauri ? (v) => snapshot(d, `pre-v${v}-${Date.now()}.db`).then(() => {}) : undefined);
     if (isTauri) await dailyBackup(d).catch((e) => console.error("daily backup", e));
     if (isTauri) void serveCompanion(d).catch((e) => console.error("companion", e));
