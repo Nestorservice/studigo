@@ -704,7 +704,11 @@
     "removeBackup": "Tartalék eltávolítása",
     "backupSaved": "Tartalék szolgáltató mentve",
     "backupRemoved": "Tartalék szolgáltató eltávolítva",
-    "usedBackup": "{{from}} nem válaszolt, próbálkozás ezzel: {{to}}"
+    "usedBackup": "{{from}} nem válaszolt, próbálkozás ezzel: {{to}}",
+    "nestorGood": "Szerveroldali kulcsok és közös keretek.",
+    "nestorInfo": "A Nestor Cloud átjáróhoz kapcsolódik. A szolgáltatói kulcsok a szerveren maradnak; ez az eszköz csak a személyes API-tokenjét tárolja.",
+    "nestorToken": "Nestor Cloud API-token",
+    "nestorTokenDesc": "Hozd létre ezt a tokent a Nestor Cloud adminfelületén. Ez nem szolgáltatói kulcs."
   },
   "stt": {
     "idle": "Koppints, és beszélj",

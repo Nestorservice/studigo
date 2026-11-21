@@ -185,6 +185,7 @@ function LocalSetup({ onPick }: { onPick: (p: ProviderId, models: string[]) => v
 }
 
 const AI_ROWS: { p: ProviderId; icon: IconName; color: string }[] = [
+  { p: "nestor", icon: "lock", color: "var(--green)" },
   { p: "ollama", icon: "lock", color: "var(--green)" },
   { p: "lmstudio", icon: "lock", color: "var(--green)" },
   { p: "deepseek", icon: "spark", color: "#4d6bfe" },
@@ -267,10 +268,10 @@ function AiConfigSheet({ provider, models: found }: { provider: ProviderId; mode
       <h3 style={{ textAlign: "center" }}>{PROVIDERS[provider].label}</h3>
       <p className="small">{t(`ai.${provider}Info`)}</p>
       <label className="od-field"><b>{t("ai.baseURL")}</b>
-        <input className="input" value={baseURL} spellCheck={false} onChange={(e) => setBaseURL(e.target.value)} placeholder={PROVIDERS[provider].baseURL} />
+        <input className="input" value={baseURL} spellCheck={false} onChange={(e) => setBaseURL(e.target.value)} placeholder={PROVIDERS[provider].baseURL || "https://admin.example.com/api/ai/v1"} />
       </label>
       {needsKey && (
-        <label className="od-field"><b>{t("ai.apiKey")}</b><span className="muted small">{t("ai.apiKeyDesc")}</span>
+        <label className="od-field"><b>{provider === "nestor" ? t("ai.nestorToken") : t("ai.apiKey")}</b><span className="muted small">{provider === "nestor" ? t("ai.nestorTokenDesc") : t("ai.apiKeyDesc")}</span>
           <input className="input" type="password" autoComplete="off" spellCheck={false} value={key} onChange={(e) => setKeyState(e.target.value)} />
         </label>
       )}

@@ -704,7 +704,11 @@
     "removeBackup": "Ersatz entfernen",
     "backupSaved": "Ersatzanbieter gespeichert",
     "backupRemoved": "Ersatzanbieter entfernt",
-    "usedBackup": "{{from}} hat nicht geantwortet, {{to}} wird gefragt"
+    "usedBackup": "{{from}} hat nicht geantwortet, {{to}} wird gefragt",
+    "nestorGood": "Schlüssel auf dem Server, gemeinsame Kontingente.",
+    "nestorInfo": "Verbindet sich mit deinem Nestor-Cloud-Gateway. Die Anbieterschlüssel bleiben auf dem Server; dieses Gerät speichert nur dein persönliches API-Token.",
+    "nestorToken": "Nestor-Cloud-API-Token",
+    "nestorTokenDesc": "Erstelle dieses Token in der Nestor-Cloud-Verwaltung. Es ist kein Anbieterschlüssel."
   },
   "stt": {
     "idle": "Zum Sprechen tippen",

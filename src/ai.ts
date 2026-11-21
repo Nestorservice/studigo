@@ -10,8 +10,9 @@ import { z } from "zod";
 import { isTauri, isCompanion, getSetting, setSetting } from "./db";
 import { retry, withBackup } from "./retry";
 
-export type ProviderId = "ollama" | "lmstudio" | "deepseek" | "openai" | "anthropic" | "gemini" | "openrouter";
+export type ProviderId = "nestor" | "ollama" | "lmstudio" | "deepseek" | "openai" | "anthropic" | "gemini" | "openrouter";
 export const PROVIDERS: Record<ProviderId, { label: string; baseURL: string; needsKey: boolean; defaultModel?: string }> = {
+  nestor: { label: "Nestor Cloud", baseURL: "", needsKey: true, defaultModel: "deepseek-chat" },
   ollama: { label: "Ollama", baseURL: isCompanion ? `${location.origin}/ollama` : "http://localhost:11434", needsKey: false },
   lmstudio: { label: "LM Studio", baseURL: "http://localhost:1234/v1", needsKey: false },
   deepseek: { label: "DeepSeek", baseURL: "https://api.deepseek.com/v1", needsKey: true, defaultModel: "deepseek-chat" },
@@ -79,6 +80,9 @@ function model(c: AiConfig, key: string | null): LanguageModel {
     // DeepSeek speaks the OpenAI chat API but only has JSON mode (json_object), not json_schema strict output,
     // so supportsStructuredOutputs stays off and the schema is sent in the prompt too (see generateWith).
     case "deepseek": return createOpenAICompatible({ name: "deepseek", baseURL, apiKey, fetch: http }).chatModel(c.model);
+    // Nestor Cloud normalizes every provider behind an OpenAI-compatible gateway. The token is a learner
+    // credential, not a provider key; provider keys never reach this device.
+    case "nestor": return createOpenAICompatible({ name: "nestor", baseURL, apiKey, fetch: http }).chatModel(c.model);
     case "anthropic": return createAnthropic({ apiKey, baseURL, fetch: http, headers: { "anthropic-dangerous-direct-browser-access": "true" } })(c.model);
     case "gemini": return createGoogle({ apiKey, baseURL, fetch: http })(c.model);
     // Compatible, not createOpenAI: that one may use the Responses API, which OpenRouter's chat models don't all speak.
@@ -97,7 +101,7 @@ export async function listModels(c: AiConfig, key: string | null): Promise<strin
   switch (c.provider) {
     case "ollama": return (await get(`${base}/api/tags`)).models.map((m: any) => m.name);
     case "lmstudio": return (await get(`${base}/models`)).data.map((m: any) => m.id);
-    case "openai": case "openrouter": case "deepseek": return (await get(`${base}/models`, { Authorization: `Bearer ${key}` })).data.map((m: any) => m.id).sort();
+    case "openai": case "openrouter": case "deepseek": case "nestor": return (await get(`${base}/models`, { Authorization: `Bearer ${key}` })).data.map((m: any) => m.id).sort();
     case "anthropic": return (await get(`${base}/models`, { "x-api-key": key ?? "", "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" })).data.map((m: any) => m.id);
     case "gemini": return (await get(`${base}/models?key=${encodeURIComponent(key ?? "")}`)).models
       .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent")).map((m: any) => m.name.replace(/^models\//, ""));

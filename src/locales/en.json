@@ -704,7 +704,11 @@
     "removeBackup": "Remove backup",
     "backupSaved": "Backup provider saved",
     "backupRemoved": "Backup provider removed",
-    "usedBackup": "{{from}} didn't answer, trying {{to}}"
+    "usedBackup": "{{from}} didn't answer, trying {{to}}",
+    "nestorGood": "Server-held keys and shared allowances.",
+    "nestorInfo": "Connects to your Nestor Cloud gateway. Provider keys stay on the server; this device stores only your personal API token.",
+    "nestorToken": "Nestor Cloud API token",
+    "nestorTokenDesc": "Create this token in the Nestor Cloud admin console. It is not a provider key."
   },
   "stt": {
     "idle": "Tap to speak",

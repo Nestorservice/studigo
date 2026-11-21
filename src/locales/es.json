@@ -732,7 +732,11 @@
     "removeBackup": "Quitar respaldo",
     "backupSaved": "Proveedor de respaldo guardado",
     "backupRemoved": "Proveedor de respaldo quitado",
-    "usedBackup": "{{from}} no respondió, probando con {{to}}"
+    "usedBackup": "{{from}} no respondió, probando con {{to}}",
+    "nestorGood": "Claves en el servidor y cupos compartidos.",
+    "nestorInfo": "Se conecta a tu puerta de enlace Nestor Cloud. Las claves de los proveedores se quedan en el servidor; este dispositivo solo guarda tu token de API personal.",
+    "nestorToken": "Token de API de Nestor Cloud",
+    "nestorTokenDesc": "Crea este token en la consola de administración de Nestor Cloud. No es una clave de proveedor."
   },
   "stt": {
     "idle": "Toca para hablar",

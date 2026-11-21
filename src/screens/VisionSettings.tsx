@@ -81,13 +81,13 @@ function VisionSheet({ onSaved }: { onSaved?: (cfg: VisionConfig) => void }) {
         </select>
       </label>
       <label className="od-field"><b>{t("vision.baseURL")}</b>
-        <input className="input" value={baseURL} spellCheck={false} onChange={(e) => setBaseURL(e.target.value)} placeholder={PROVIDERS[provider].baseURL} />
+        <input className="input" value={baseURL} spellCheck={false} onChange={(e) => setBaseURL(e.target.value)} placeholder={PROVIDERS[provider].baseURL || "https://admin.example.com/api/ai/v1"} />
       </label>
       <label className="od-field"><b>{t("vision.model")}</b><span className="muted small">{t("vision.modelDesc")}</span>
         <input className="input" value={model} spellCheck={false} onChange={(e) => setModel(e.target.value)} placeholder={defaultVisionModel(provider)} />
       </label>
       {needsKey && (
-        <label className="od-field"><b>{t("vision.apiKey")}</b><span className="muted small">{t("ai.apiKeyDesc")}</span>
+        <label className="od-field"><b>{provider === "nestor" ? t("ai.nestorToken") : t("vision.apiKey")}</b><span className="muted small">{provider === "nestor" ? t("ai.nestorTokenDesc") : t("ai.apiKeyDesc")}</span>
           <input className="input" type="password" autoComplete="off" spellCheck={false} value={key} onChange={(e) => setKeyState(e.target.value)} />
         </label>
       )}
