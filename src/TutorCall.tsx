@@ -430,7 +430,7 @@ export function TutorCall({ who }: { who: CharacterId }) {
         <button className={`call-btn${captions ? " on" : ""}`} onClick={() => setCaptions((v) => !v)} aria-pressed={captions} aria-label={capLabel} data-tip={capLabel}><Icon name="captions" /></button>
         {lastTutor?.translation && <button className="call-btn" onClick={() => voiceNative(lastTutor.translation!)} aria-label={t("voice.playTranslation")} data-tip={t("voice.playTranslation")}><Icon name="headphones" /></button>}
         <button className={`call-btn${pr ? " on" : ""}`} onClick={() => (pr ? practiceClose() : practiceOpen(true))} aria-pressed={!!pr} aria-label={prLabel} data-tip={prLabel}><Icon name="book" /></button>
-        <button className={`call-btn${micOn ? " on" : " off"}`} disabled={!!micBlock} onClick={toggleMic} aria-pressed={micOn} aria-label={micLabel} data-tip={micBlock ? t(micBlock) : micLabel}><Icon name="mic" /></button>
+        <button className={`call-btn${micOn ? " on" : " off"}`} onClick={toggleMic} aria-pressed={micOn} aria-label={micLabel} data-tip={micBlock ? t(micBlock) : micLabel}><Icon name="mic" /></button>
         <button className={`call-btn${camOn ? " on" : " off"}`} disabled={!camOk} onClick={toggleCam} aria-pressed={camOn} aria-label={camLabel} data-tip={camOk ? camLabel : t("tutor.camDenied")}><Icon name="video" /></button>
         <button className="call-btn end" onClick={end} aria-label={t("tutor.end")} data-tip={t("tutor.end")}><Icon name="phone" /></button>
       </div>

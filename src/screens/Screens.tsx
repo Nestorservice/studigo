@@ -8,6 +8,7 @@ import { useStartLesson } from "../Lesson";
 import { CardsSheet } from "../Flashcards";
 import { WriteSheet } from "../Write";
 import { useSpeakBlock } from "../Mic";
+import { requestMicPermission } from "../stt";
 import { msLeft, rivalXp, zones, PROMOTE, DEMOTE, TIERS } from "../league";
 import * as db from "../db";
 import { dueToday } from "../srs";
@@ -41,17 +42,80 @@ export function LiveButton({ className = "" }: { className?: string }) {
 }
 
 /** Picks the tutor for a video lesson; also opened from the live lesson button. */
+/** iOS keeps microphone permission with Safari, not with the installed icon. Explain it
+ *  instead of sending the learner to a Settings screen where Sprigo does not exist. */
+function MicAccessSheet({ onGranted, onSkip, onCancel }: { onGranted: () => void; onSkip: () => void; onCancel: () => void }) {
+  const { i18n } = useTranslation();
+  const fr = (i18n.resolvedLanguage || "").toLowerCase().startsWith("fr");
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const retry = async () => {
+    setBusy(true); setError("");
+    try { await requestMicPermission(); onGranted(); }
+    catch { setError(fr ? "Le micro est encore bloqué. Vérifie le réglage puis réessaie." : "The microphone is still blocked. Check the setting and try again."); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="od-stack" style={{ "--od-gap": "14px", textAlign: "left" } as React.CSSProperties}>
+      <h3 style={{ textAlign: "center" }}>{fr ? "Autoriser le microphone" : "Allow the microphone"}</h3>
+      <p className="small">
+        {ios
+          ? (fr
+            ? "Sur iPhone, l'icône Sprigo utilise l'autorisation de Safari. C'est normal que Sprigo n'apparaisse pas dans Réglages > Confidentialité > Microphone."
+            : "On iPhone, the Sprigo icon uses Safari's permission. It is normal that Sprigo does not appear in Settings > Privacy > Microphone.")
+          : (fr ? "Autorise le microphone pour ce site dans ton navigateur." : "Allow the microphone for this site in your browser.")}
+      </p>
+      <ol className="small" style={{ margin: 0, paddingLeft: 20, color: "var(--text-muted)", lineHeight: 1.55 }}>
+        {ios ? (
+          <>
+            <li>{fr ? "Ouvre Réglages > Safari > Microphone, ou Réglages > Confidentialité et sécurité > Microphone, puis choisis Safari et Autoriser." : "Open Settings > Safari > Microphone, or Settings > Privacy & Security > Microphone, then choose Safari and allow it."}</li>
+            <li>{fr ? "Ou dans Safari sur le lien Sprigo : aA > Réglages du site > Microphone > Autoriser." : "Or in Safari on the Sprigo link: aA > Website Settings > Microphone > Allow."}</li>
+            <li>{fr ? "Reviens dans Sprigo et touche Réessayer." : "Come back to Sprigo and tap Retry."}</li>
+          </>
+        ) : (
+          <>
+            <li>{fr ? "Ouvre les paramètres du navigateur > Autorisations du site > Microphone." : "Open browser settings > Site permissions > Microphone."}</li>
+            <li>{fr ? "Autorise ce site, puis reviens ici." : "Allow this site, then come back here."}</li>
+          </>
+        )}
+      </ol>
+      {error && <p className="small" role="alert" style={{ color: "var(--red)" }}>{error}</p>}
+      <div className="od-stack" style={{ "--od-gap": "8px" } as React.CSSProperties}>
+        <button className="btn btn-primary btn-block" type="button" onClick={() => void retry()} disabled={busy}>
+          {busy ? "…" : (fr ? "Réessayer" : "Retry")}
+        </button>
+        <button className="btn btn-ghost btn-block" type="button" onClick={onSkip}>{fr ? "Continuer sans micro" : "Continue without a microphone"}</button>
+        <button className="btn btn-ghost btn-block" type="button" onClick={onCancel}>{fr ? "Annuler" : "Cancel"}</button>
+      </div>
+    </div>
+  );
+}
+
 export function TutorSheet() {
   const { t } = useTranslation();
-  const { closeSheet } = useApp();
+  const { closeSheet, openSheet } = useApp();
   const start = useStartLesson();
+  const choose = async (k: CharacterId) => {
+    closeSheet();
+    try {
+      await requestMicPermission(); // must happen inside this click, before the call screen mounts
+      start(`tutor:${k}`);
+    } catch {
+      openSheet(<MicAccessSheet
+        onGranted={() => { closeSheet(); start(`tutor:${k}`); }}
+        onSkip={() => { closeSheet(); start(`tutor:${k}`); }}
+        onCancel={closeSheet}
+      />);
+    }
+  };
   return (
     <div className="od-stack" style={{ "--od-gap": "10px" } as React.CSSProperties}>
       <h3 style={{ textAlign: "center" }}>{t("tutor.pick")}</h3>
       {(Object.keys(CHARACTERS) as CharacterId[]).map((k) => {
         const { name, color, face } = CHARACTERS[k];
         return (
-          <button key={k} className="tutor-pick" onClick={() => { closeSheet(); start(`tutor:${k}`); }}>
+          <button key={k} className="tutor-pick" onClick={() => void choose(k)}>
             <Face spec={face} color={color} label={name} scene={k} />
             <b className="call-name">{name}</b>
           </button>

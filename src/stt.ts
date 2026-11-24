@@ -79,6 +79,14 @@ export const sttReady = () => (ready ??= (async () => {
 /** Call after the provider or the key changes. */
 export const resetSttReady = () => { ready = undefined; };
 
+/** Ask for the microphone inside the click that starts a call. iOS only shows the
+ *  prompt while the gesture is still active; later effects cannot open it. */
+export async function requestMicPermission(): Promise<void> {
+  if (!navigator.mediaDevices?.getUserMedia) throw new Error("Microphone unavailable");
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  stream.getTracks().forEach((track) => track.stop());
+}
+
 export const MAX_RECORD_S = 30;
 
 /** Starts recording; `stop()` returns the transcript (`stop(false)` just releases the mic). Auto-stops after MAX_RECORD_S (onAutoStop fires).
