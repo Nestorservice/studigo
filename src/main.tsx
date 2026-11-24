@@ -15,11 +15,14 @@ import "./i18n";
 import "./theme";
 import { AppProvider } from "./store";
 import { CloudGate } from "./CloudGate";
+import { InstallPrompt } from "./InstallPrompt";
+import { registerPwa } from "./pwa";
 import App from "./App";
 import { isCompanion } from "./db";
 import { registerOfflinePage } from "./companion";
 
 if (isCompanion) registerOfflinePage();
+registerPwa();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -27,6 +30,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <CloudGate>
         <App />
       </CloudGate>
+      <InstallPrompt appName="Studigo" icon="/icon-192.png" storageKey="studigo.install" />
     </AppProvider>
   </React.StrictMode>,
 );

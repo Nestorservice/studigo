@@ -834,3 +834,19 @@ html[data-theme="dark"] .garden-hero{background:var(--btd)}
 .cloud-switch b{color:var(--green-dark);text-decoration:underline;text-underline-offset:3px}
 .cloud-note{margin:0;color:var(--text-faint);font-size:11px;line-height:1.45;text-align:center}
 .cloud-loading{width:auto;min-width:230px;flex-direction:row;align-items:center;justify-content:center;color:var(--text-muted);font-size:12px;font-weight:700}
+
+/* PWA install invitation (web build, mobile only). */
+.pwa-scrim{position:fixed;inset:0;z-index:400;display:flex;align-items:flex-end;justify-content:center;padding:14px;background:var(--scrim);backdrop-filter:blur(5px);animation:pwa-fade .2s ease-out}
+.pwa-dialog{position:relative;width:min(390px,100%);padding:24px 22px 18px;background:var(--card);border:2px solid var(--border);border-radius:24px;box-shadow:0 24px 70px color-mix(in srgb,var(--text) 24%,transparent);text-align:center;animation:pwa-rise .28s cubic-bezier(.2,.8,.2,1)}
+.pwa-close{position:absolute;top:10px;right:12px;width:34px;height:34px;border:0;border-radius:50%;background:var(--surface);color:var(--text-muted);font:inherit;font-size:22px;line-height:1;cursor:pointer}
+.pwa-icon{width:72px;height:72px;border-radius:18px;box-shadow:0 8px 22px color-mix(in srgb,var(--text) 16%,transparent)}
+.pwa-dialog h2{margin:14px 0 7px;font-size:24px;line-height:1.1;letter-spacing:-.02em}
+.pwa-dialog>p{margin:0;color:var(--text-muted);font-size:13px;line-height:1.5}
+.pwa-steps{display:grid;gap:10px;margin:18px 0 4px;padding:0;list-style:none;text-align:left}
+.pwa-steps li{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:13px;background:var(--surface);font-size:12px;font-weight:700;line-height:1.4}
+.pwa-step-icon{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;border-radius:10px;background:var(--green-tint);color:var(--green-dark)}
+.pwa-actions{display:grid;gap:8px;margin-top:16px}
+@keyframes pwa-fade{from{opacity:0}to{opacity:1}}
+@keyframes pwa-rise{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+@media (min-width:520px){.pwa-scrim{align-items:center;padding:24px}.pwa-dialog{padding:28px 26px 22px}}
+@media (prefers-reduced-motion:reduce){.pwa-scrim,.pwa-dialog{animation:none}}

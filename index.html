@@ -14,6 +14,18 @@
     <meta name="theme-color" content="#fbf8f1" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#161a13" media="(prefers-color-scheme: dark)" />
     <title>Studigo</title>
+    <script>
+      window.__pwaInstallEvent = null;
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        window.__pwaInstallEvent = event;
+        window.dispatchEvent(new Event("pwa-installable"));
+      });
+      window.addEventListener("appinstalled", () => {
+        window.__pwaInstallEvent = null;
+        window.dispatchEvent(new Event("pwa-installed"));
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

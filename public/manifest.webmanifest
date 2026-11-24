@@ -1,8 +1,14 @@
 {
+  "id": "/",
   "name": "Studigo",
   "short_name": "Studigo",
+  "description": "Transforme tes cours en fiches claires, expliquées page par page.",
+  "lang": "fr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
   "background_color": "#fbf8f1",
   "theme_color": "#fbf8f1",
   "icons": [
