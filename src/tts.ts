@@ -152,6 +152,40 @@ export async function prewarm(lang: string, voice?: Voice) {
 let seq = 0;
 let sources: AudioBufferSourceNode[] = [];
 let actx: AudioContext | undefined;
+let audioUnlocked = false;
+
+/** iOS locks Web Audio until a real gesture. Unlock on the first tap and keep the same
+ *  context for the whole session; installed PWAs are stricter than a normal tab. */
+export function unlockAudio(): AudioContext | undefined {
+  try {
+    const ctx = (actx ??= new AudioContext());
+    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+    if (session) session.type = "playback"; // media playback instead of the ambient audio session
+    if (ctx.state === "suspended") void ctx.resume();
+    if (!audioUnlocked) {
+      const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * 0.08)), ctx.sampleRate);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      audioUnlocked = true;
+    }
+    return ctx;
+  } catch {
+    return actx;
+  }
+}
+
+if (typeof document !== "undefined") {
+  const firstGesture = () => {
+    unlockAudio();
+    document.removeEventListener("pointerdown", firstGesture, true);
+    document.removeEventListener("touchend", firstGesture, true);
+  };
+  document.addEventListener("pointerdown", firstGesture, { capture: true, passive: true });
+  document.addEventListener("touchend", firstGesture, { capture: true, passive: true });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) void actx?.resume(); });
+}
 let analyser: AnalyserNode | undefined; // local-engine audio passes through it so faces can read the loudness
 const out = (ctx: AudioContext) => {
   if (!analyser) {
@@ -362,6 +396,7 @@ const STILL_LOADING = "Piper voice still loading"; // a first download: the next
  *  Falls back to the system voice if the local engine fails before any audio. `started` gets the time its audio begins.
  *  `speed` overrides the learner's setting (the slow replay). */
 export async function speak(text: string, lang: string, voice?: Voice, started?: (at: number) => void, speed?: number): Promise<void> {
+  unlockAudio(); // still inside the click on the Listen / call button
   stopSpeaking();
   onStart = started;
   const mine = seq;
