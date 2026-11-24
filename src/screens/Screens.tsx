@@ -47,7 +47,9 @@ export function LiveButton({ className = "" }: { className?: string }) {
 function MicAccessSheet({ onGranted, onSkip, onCancel }: { onGranted: () => void; onSkip: () => void; onCancel: () => void }) {
   const { i18n } = useTranslation();
   const fr = (i18n.resolvedLanguage || "").toLowerCase().startsWith("fr");
-  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const ua = navigator.userAgent;
+  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const chrome = /CriOS/i.test(ua);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const retry = async () => {
@@ -62,16 +64,30 @@ function MicAccessSheet({ onGranted, onSkip, onCancel }: { onGranted: () => void
       <p className="small">
         {ios
           ? (fr
-            ? "Sur iPhone, l'icône Sprigo utilise l'autorisation de Safari. C'est normal que Sprigo n'apparaisse pas dans Réglages > Confidentialité > Microphone."
-            : "On iPhone, the Sprigo icon uses Safari's permission. It is normal that Sprigo does not appear in Settings > Privacy > Microphone.")
+            ? (chrome
+              ? "Sur iPhone, Chrome gère l'autorisation du micro. C'est normal que Sprigo n'apparaisse pas comme une application dans les réglages."
+              : "Sur iPhone, l'icône Sprigo utilise l'autorisation de Safari. C'est normal que Sprigo n'apparaisse pas dans Réglages > Confidentialité > Microphone.")
+            : (chrome
+              ? "On iPhone, Chrome owns the microphone permission. It is normal that Sprigo does not appear as an app in Settings."
+              : "On iPhone, the Sprigo icon uses Safari's permission. It is normal that Sprigo does not appear in Settings > Privacy > Microphone."))
           : (fr ? "Autorise le microphone pour ce site dans ton navigateur." : "Allow the microphone for this site in your browser.")}
       </p>
       <ol className="small" style={{ margin: 0, paddingLeft: 20, color: "var(--text-muted)", lineHeight: 1.55 }}>
         {ios ? (
           <>
-            <li>{fr ? "Ouvre Réglages > Safari > Microphone, ou Réglages > Confidentialité et sécurité > Microphone, puis choisis Safari et Autoriser." : "Open Settings > Safari > Microphone, or Settings > Privacy & Security > Microphone, then choose Safari and allow it."}</li>
-            <li>{fr ? "Ou dans Safari sur le lien Sprigo : aA > Réglages du site > Microphone > Autoriser." : "Or in Safari on the Sprigo link: aA > Website Settings > Microphone > Allow."}</li>
-            <li>{fr ? "Reviens dans Sprigo et touche Réessayer." : "Come back to Sprigo and tap Retry."}</li>
+            {chrome ? (
+              <>
+                <li>{fr ? "Ouvre Réglages > Confidentialité et sécurité > Microphone, puis choisis Chrome. Si Chrome n'apparaît pas, ouvre Chrome et touche le micro une première fois." : "Open Settings > Privacy & Security > Microphone, then choose Chrome. If Chrome is not listed, open Chrome and tap the microphone once."}</li>
+                <li>{fr ? "Dans Chrome, ouvre Sprigo, touche ⋮ > Paramètres > Paramètres du site > Microphone, puis autorise." : "In Chrome, open Sprigo, tap ⋮ > Settings > Site settings > Microphone, then allow."}</li>
+                <li>{fr ? "Reviens dans Sprigo et touche Réessayer. Si l'icône installée reste bloquée, utilise le lien dans Safari pour les appels." : "Come back to Sprigo and tap Retry. If the installed icon stays blocked, use the Safari link for calls."}</li>
+              </>
+            ) : (
+              <>
+                <li>{fr ? "Ouvre Réglages > Safari > Microphone, ou Réglages > Confidentialité et sécurité > Microphone, puis choisis Safari et Autoriser." : "Open Settings > Safari > Microphone, or Settings > Privacy & Security > Microphone, then choose Safari and allow it."}</li>
+                <li>{fr ? "Ou dans Safari sur le lien Sprigo : aA > Réglages du site > Microphone > Autoriser." : "Or in Safari on the Sprigo link: aA > Website Settings > Microphone > Allow."}</li>
+                <li>{fr ? "Reviens dans Sprigo et touche Réessayer." : "Come back to Sprigo and tap Retry."}</li>
+              </>
+            )}
           </>
         ) : (
           <>

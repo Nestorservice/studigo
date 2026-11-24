@@ -23,6 +23,7 @@ function HomeGlyph() {
 export function InstallPrompt({ appName, icon, storageKey }: { appName: string; icon: string; storageKey: string }) {
   const [open, setOpen] = useState(false);
   const [ios, setIos] = useState(false);
+  const [iosBrowser, setIosBrowser] = useState<"safari" | "chrome" | "other">("safari");
   const [instructions, setInstructions] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -35,6 +36,7 @@ export function InstallPrompt({ appName, icon, storageKey }: { appName: string; 
     const ua = navigator.userAgent;
     const isIos = /iPad|iPhone|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     setIos(isIos);
+    setIosBrowser(/CriOS/i.test(ua) ? "chrome" : /FxiOS|EdgiOS/i.test(ua) ? "other" : "safari");
 
     let timer = 0;
     const show = () => {
@@ -104,7 +106,7 @@ export function InstallPrompt({ appName, icon, storageKey }: { appName: string; 
           <ol className="pwa-steps">
             <li>
               <span className="pwa-step-icon"><ShareGlyph /></span>
-              <span>{ios ? "Dans Safari, appuie sur Partager." : "Ouvre le menu de ton navigateur."}</span>
+              <span>{ios ? (iosBrowser === "chrome" ? "Dans Chrome, touche Partager." : iosBrowser === "other" ? "Ouvre le menu de ton navigateur." : "Dans Safari, appuie sur Partager.") : "Ouvre le menu de ton navigateur."}</span>
             </li>
             <li>
               <span className="pwa-step-icon"><HomeGlyph /></span>
