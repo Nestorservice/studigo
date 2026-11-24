@@ -8,10 +8,11 @@ import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { getSetting, isCompanion, isTauri } from "./db";
 import { ELEVEN_VOICES, LOCAL_TTS, elevenRequest, localRequest, type ByteRequest, type LocalTts } from "./ttsCloud";
 import { pickSystemVoice } from "./voices";
+import { cloudApi, cloudEnabled, loadCloudSession } from "./cloud";
 import { mouthBright, mouthLevel, remember, zcr } from "./audio";
 
 export type Voice = { gender: "f" | "m"; kokoro?: string };
-export type TtsProvider = "system" | "piper" | "kokoro" | "elevenlabs" | "local";
+export type TtsProvider = "system" | "piper" | "kokoro" | "elevenlabs" | "local" | "cloud";
 type Engine = "piper" | "kokoro"; // the worker engines
 type Chunk = { audio: Float32Array; rate: number };
 type Msg = { type: string; id?: number; p?: number; message?: string; voice?: string } & Partial<Chunk>;
@@ -19,6 +20,7 @@ type Msg = { type: string; id?: number; p?: number; message?: string; voice?: st
 // The phone shares the desktop's database but has its own voice: Kokoro runs out of memory in iOS Safari (docs/MOBILE.md §3).
 export const TTS_KEY = isCompanion ? "tts.phone" : "tts";
 export const ttsProvider = async (): Promise<TtsProvider> => {
+  if (cloudEnabled && loadCloudSession()) return "cloud";
   const v = await getSetting(TTS_KEY);
   if (v === "system" || v === "piper") return v;
   if ((v === "kokoro" || v === "elevenlabs" || v === "local") && !isCompanion) return v;
@@ -77,6 +79,7 @@ export const ttsSpeaks = (p: TtsProvider, lang: string) => (p === "kokoro" ? lan
 /** The engine and its voice for this language, or null for the system voice. */
 async function engineFor(lang: string, voice?: Voice, p?: TtsProvider, accent?: string): Promise<[Exclude<TtsProvider, "system">, string] | null> {
   p ??= await ttsProvider();
+  if (p === "cloud") return ["cloud", ""];
   if (p === "elevenlabs") return ["elevenlabs", await elevenVoice(voice?.gender)];
   if (p === "local") return ["local", JSON.stringify(await localTts())];
   if (p === "kokoro" && lang.startsWith("en")) {
@@ -319,6 +322,19 @@ const elevenLine = (text: string, lang: string, voice: string, key?: string, spe
     return elevenRequest(k, voice, text, lang, speed);
   });
 
+/** Cloud speech is authenticated by the account session; the ElevenLabs key never leaves the server. */
+const cloudLine = (text: string, lang: string, gender: "f" | "m" | undefined, speed: number) => async (): Promise<ByteRequest> => {
+  const session = loadCloudSession();
+  if (!session) throw new Error("Studigo account is not connected");
+  return {
+    url: `${cloudApi}/ai/tts`,
+    headers: { Authorization: `Bearer ${session.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      text, voiceId: ELEVEN_VOICES[gender ?? "f"], languageCode: lang.slice(0, 2).toLowerCase(), speed,
+    }),
+  };
+};
+
 /** Settings' test for the local server: no fallback, so an unreachable server throws; resolves once audio starts. */
 export async function sayWithLocal(text: string, c: LocalTts) {
   stopSpeaking();
@@ -358,9 +374,11 @@ export async function speak(text: string, lang: string, voice?: Voice, started?:
   if (local) {
     try {
       lastEngine = local[0];
-      if (local[0] === "elevenlabs") await viaBytes(`elevenlabs:${local[1]}:${rate}\n${text}`, elevenLine(text, lang, local[1], undefined, rate), mine, done);
+      if (local[0] === "cloud") await viaBytes(`cloud:${rate}
+${text}`, cloudLine(text, lang, voice?.gender, rate), mine, done);
+      else if (local[0] === "elevenlabs") await viaBytes(`elevenlabs:${local[1]}:${rate}\n${text}`, elevenLine(text, lang, local[1], undefined, rate), mine, done);
       else if (local[0] === "local") await viaBytes(`local:${local[1]}:${rate}\n${text}`, async () => localRequest(JSON.parse(local[1]), text, rate), mine, done);
-      else await viaWorker(local[0], text, local[1], mine, done, rate);
+      else if (local[0] === "piper" || local[0] === "kokoro") await viaWorker(local[0], text, local[1], mine, done, rate);
       return over;
     } catch (e) {
       console.error(e);

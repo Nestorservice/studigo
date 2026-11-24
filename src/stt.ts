@@ -6,9 +6,13 @@ import { isTauri, isCompanion, getSetting } from "./db";
 import { VAD, VAD_IDLE, concat, noiseThreshold, resample, rms, vadStep, type VadEvent } from "./audio";
 import { wav16 } from "./wav";
 import { speechMetrics, type Utterance } from "./speech";
+import { cloudApi, cloudEnabled, loadCloudSession } from "./cloud";
 
-export type SttProvider = "whisper" | "deepgram";
-export const sttProvider = async (): Promise<SttProvider> => ((await getSetting("stt")) === "deepgram" ? "deepgram" : "whisper");
+export type SttProvider = "whisper" | "deepgram" | "cloud";
+export const sttProvider = async (): Promise<SttProvider> => {
+  if (cloudEnabled && loadCloudSession()) return "cloud";
+  return (await getSetting("stt")) === "deepgram" ? "deepgram" : "whisper";
+};
 
 // ponytail: the dev browser preview has no keychain, so it keeps the key in localStorage. Never used in the app.
 const DEV_KEY = "studigo.devkey.deepgram";
@@ -34,6 +38,26 @@ export async function deepgramTranscribe(wav: Uint8Array, lang: string, key?: st
 }
 
 /** Whisper model sizes (src-tauri/src/lib.rs `stt_file`): "base" ships with the app, the others are downloaded on demand. */
+/** Server-side Deepgram: the key stays in the administration. */
+async function cloudTranscribe(wav: Uint8Array, lang: string, hints: string[]): Promise<string> {
+  const session = loadCloudSession();
+  if (!session) throw new Error("Studigo account is not connected");
+  let binary = "";
+  for (let i = 0; i < wav.length; i += 0x8000) binary += String.fromCharCode(...wav.subarray(i, i + 0x8000));
+  const response = await http(`${cloudApi}/ai/stt`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${session.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      audio: btoa(binary),
+      mimeType: "audio/wav",
+      language: lang.slice(0, 2).toLowerCase(),
+      keyterms: [...new Set(hints.map((h) => h.trim()).filter(Boolean))].slice(0, 30),
+    }),
+  });
+  if (!response.ok) throw new Error(`${response.status} ${(await response.text()).slice(0, 200)}`);
+  return (await response.json() as { text?: string }).text ?? "";
+}
+
 export type WhisperModel = "base" | "small" | "turbo";
 /** [model in use, downloaded models] */
 export const whisperModels = () => invoke<[WhisperModel, WhisperModel[]]>("stt_models");
@@ -48,6 +72,7 @@ export function downloadWhisper(name: WhisperModel, onProgress: (p: number) => v
 let ready: Promise<boolean> | undefined;
 /** Speaking available? Deepgram: key present. Whisper: model present in this build (always false in the browser preview). */
 export const sttReady = () => (ready ??= (async () => {
+  if ((await sttProvider()) === "cloud") return !!loadCloudSession();
   if ((await sttProvider()) === "deepgram") return !!(await getDeepgramKey().catch(() => null));
   return isTauri ? invoke<boolean>("stt_ready").catch(() => false) : isCompanion;
 })());
@@ -91,6 +116,7 @@ export type Recording = Awaited<ReturnType<typeof startRecording>>;
  *  toward the words being taught (Deepgram keyterms, Whisper initial prompt). */
 async function transcribeSamples(all: Float32Array, rate: number, lang: string, hints: string[] = []): Promise<string> {
   if (all.length < rate * 0.3) return "";
+  if ((await sttProvider()) === "cloud") return cloudTranscribe(wav16(resample(all, rate)), lang, hints);
   if ((await sttProvider()) === "deepgram") return deepgramTranscribe(wav16(resample(all, rate)), lang, undefined, hints);
   if (isCompanion) { // phone: the desktop's whisper (src-tauri/src/companion.rs), raw f32 samples
     const r = await fetch(`/transcribe?lang=${encodeURIComponent(lang)}`, { method: "POST", headers: { "X-Studigo": "1" }, body: resample(all, rate) as BodyInit });
