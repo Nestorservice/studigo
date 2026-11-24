@@ -87,7 +87,7 @@ function VisionSheet({ onSaved }: { onSaved?: (cfg: VisionConfig) => void }) {
         <input className="input" value={model} spellCheck={false} onChange={(e) => setModel(e.target.value)} placeholder={defaultVisionModel(provider)} />
       </label>
       {needsKey && (
-        <label className="od-field"><b>{provider === "nestor" ? t("ai.nestorToken") : t("vision.apiKey")}</b><span className="muted small">{provider === "nestor" ? t("ai.nestorTokenDesc") : t("ai.apiKeyDesc")}</span>
+        <label className="od-field"><b>{t("vision.apiKey")}</b><span className="muted small">{t("ai.apiKeyDesc")}</span>
           <input className="input" type="password" autoComplete="off" spellCheck={false} value={key} onChange={(e) => setKeyState(e.target.value)} />
         </label>
       )}

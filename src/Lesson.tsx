@@ -4,6 +4,7 @@ import { Icon } from "./icons";
 import { useApp } from "./store";
 import { useBuy } from "./screens/Screens";
 import * as db from "./db";
+import { cloudEnabled } from "./cloud";
 import { SPEECH_PASS, hideAnswer, listenItems, madnessItems, matchesAnswer, normalize, sameWords, speakItems, speechMisses, speechScore, type Item } from "./activities";
 import { MicButton } from "./Mic";
 import { answerLang } from "./evalRules";
@@ -23,7 +24,7 @@ export function useStartLesson() {
   const { s, ai, startLesson, openSheet, closeSheet, go } = useApp();
   const buy = useBuy();
   return (id: string) => {
-    if (!ai && (!id.startsWith("practice-") || id === "practice-conjugate")) return openSheet(<>
+    if (!ai && !cloudEnabled && (!id.startsWith("practice-") || id === "practice-conjugate")) return openSheet(<>
       <h3>{t("ai.needed")}</h3><p>{t("ai.neededDesc")}</p>
       <button className="btn btn-primary btn-block" onClick={() => { closeSheet(); go("settings"); }}>{t("ai.setUp")}</button>
       <button className="btn btn-ghost btn-block" onClick={closeSheet}>{t("sheet.cancel")}</button>

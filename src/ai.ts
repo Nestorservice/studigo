@@ -12,7 +12,7 @@ import { retry, withBackup } from "./retry";
 
 export type ProviderId = "nestor" | "ollama" | "lmstudio" | "deepseek" | "openai" | "anthropic" | "gemini" | "openrouter";
 export const PROVIDERS: Record<ProviderId, { label: string; baseURL: string; needsKey: boolean; defaultModel?: string }> = {
-  nestor: { label: "Nestor Cloud", baseURL: "", needsKey: true, defaultModel: "deepseek-chat" },
+  nestor: { label: "Server", baseURL: "", needsKey: true, defaultModel: "deepseek-chat" },
   ollama: { label: "Ollama", baseURL: isCompanion ? `${location.origin}/ollama` : "http://localhost:11434", needsKey: false },
   lmstudio: { label: "LM Studio", baseURL: "http://localhost:1234/v1", needsKey: false },
   deepseek: { label: "DeepSeek", baseURL: "https://api.deepseek.com/v1", needsKey: true, defaultModel: "deepseek-chat" },
@@ -80,7 +80,7 @@ function model(c: AiConfig, key: string | null): LanguageModel {
     // DeepSeek speaks the OpenAI chat API but only has JSON mode (json_object), not json_schema strict output,
     // so supportsStructuredOutputs stays off and the schema is sent in the prompt too (see generateWith).
     case "deepseek": return createOpenAICompatible({ name: "deepseek", baseURL, apiKey, fetch: http }).chatModel(c.model);
-    // Nestor Cloud normalizes every provider behind an OpenAI-compatible gateway. The token is a learner
+    // Sprigo normalizes every provider behind an OpenAI-compatible gateway. The token is a learner
     // credential, not a provider key; provider keys never reach this device.
     case "nestor": return createOpenAICompatible({
       name: "nestor", baseURL, apiKey, fetch: http, headers: { "x-project": "studigo" },

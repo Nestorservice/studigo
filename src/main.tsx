@@ -14,6 +14,7 @@ import "./styles.css";
 import "./i18n";
 import "./theme";
 import { AppProvider } from "./store";
+import { CloudGate } from "./CloudGate";
 import App from "./App";
 import { isCompanion } from "./db";
 import { registerOfflinePage } from "./companion";
@@ -23,7 +24,9 @@ if (isCompanion) registerOfflinePage();
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <AppProvider>
-      <App />
+      <CloudGate>
+        <App />
+      </CloudGate>
     </AppProvider>
   </React.StrictMode>,
 );

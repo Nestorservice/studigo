@@ -734,9 +734,9 @@
     "backupRemoved": "Fournisseur de secours retiré",
     "usedBackup": "{{from}} n'a pas répondu, essai avec {{to}}",
     "nestorGood": "Clés gardées sur le serveur et quotas partagés.",
-    "nestorInfo": "Se connecte à ta passerelle Nestor Cloud. Les clés des fournisseurs restent sur le serveur ; cet appareil ne garde que ton jeton API personnel.",
-    "nestorToken": "Jeton API Nestor Cloud",
-    "nestorTokenDesc": "Crée ce jeton dans la console d'administration Nestor Cloud. Ce n'est pas une clé de fournisseur."
+    "nestorInfo": "Se connecte à ta passerelle Sprigo. Les clés des fournisseurs restent sur le serveur ; cet appareil ne garde que ton jeton API personnel.",
+    "nestorToken": "Jeton API Sprigo",
+    "nestorTokenDesc": "Crée ce jeton dans la console d'administration Sprigo. Ce n'est pas une clé de fournisseur."
   },
   "stt": {
     "idle": "Touche pour parler",

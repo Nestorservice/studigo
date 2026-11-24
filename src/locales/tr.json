@@ -700,9 +700,9 @@
     "backupRemoved": "Yedek sağlayıcı kaldırıldı",
     "usedBackup": "{{from}} cevap vermedi, {{to}} deneniyor",
     "nestorGood": "Sunucuda tutulan anahtarlar ve ortak kotalar.",
-    "nestorInfo": "Nestor Cloud geçidine bağlanır. Sağlayıcı anahtarları sunucuda kalır; bu cihaz yalnızca kişisel API jetonunu saklar.",
-    "nestorToken": "Nestor Cloud API jetonu",
-    "nestorTokenDesc": "Bu jetonu Nestor Cloud yönetim konsolunda oluştur. Bu bir sağlayıcı anahtarı değildir."
+    "nestorInfo": "Sprigo geçidine bağlanır. Sağlayıcı anahtarları sunucuda kalır; bu cihaz yalnızca kişisel API jetonunu saklar.",
+    "nestorToken": "Sprigo API jetonu",
+    "nestorTokenDesc": "Bu jetonu Sprigo yönetim konsolunda oluştur. Bu bir sağlayıcı anahtarı değildir."
   },
   "stt": {
     "idle": "Konuşmak için dokun",

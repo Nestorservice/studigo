@@ -3,12 +3,11 @@
 import { getSetting, setSetting } from "../db";
 import { getKey, PROVIDERS, type AiConfig, type ProviderId } from "../ai";
 
-export const VISION_PROVIDERS = ["nestor", "gemini", "openai", "anthropic", "ollama", "lmstudio"] as const;
+export const VISION_PROVIDERS = ["gemini", "openai", "anthropic", "ollama", "lmstudio"] as const;
 export type VisionProvider = (typeof VISION_PROVIDERS)[number];
 export type VisionConfig = { provider: VisionProvider; baseURL: string; model: string };
 
 const DEFAULT_MODEL: Record<VisionProvider, string> = {
-  nestor: "gemini-2.5-flash",
   gemini: "gemini-2.5-flash",
   openai: "gpt-4.1-mini",
   anthropic: "claude-sonnet-4-5",

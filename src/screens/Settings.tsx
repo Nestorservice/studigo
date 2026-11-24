@@ -15,6 +15,7 @@ import { VisionRow } from "./VisionSettings";
 import { InfoTip, SttRow, TtsRow } from "./VoiceSettings";
 import { Icon, type IconName } from "../icons";
 import { HelpButton, HelpSheet, openLink } from "../Help";
+import { cloudEnabled, cloudLogout, loadCloudSession } from "../cloud";
 
 const TEXT_SIZES = [1, 1.15, 1.3];
 const gap = (g: string) => ({ "--od-gap": g }) as React.CSSProperties;
@@ -185,7 +186,6 @@ function LocalSetup({ onPick }: { onPick: (p: ProviderId, models: string[]) => v
 }
 
 const AI_ROWS: { p: ProviderId; icon: IconName; color: string }[] = [
-  { p: "nestor", icon: "lock", color: "var(--green)" },
   { p: "ollama", icon: "lock", color: "var(--green)" },
   { p: "lmstudio", icon: "lock", color: "var(--green)" },
   { p: "deepseek", icon: "spark", color: "#4d6bfe" },
@@ -327,9 +327,12 @@ export function Settings() {
   const langName = useLangName();
   const themes: ThemePref[] = ["system", "light", "dark"];
   const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+  const cloud = cloudEnabled ? loadCloudSession() : null;
+  const cf = (i18n.resolvedLanguage || "").toLowerCase().startsWith("fr");
   // Phone: AI, voice and data settings are the desktop's (shared database), so those tabs stay there.
-  const tabs: Tab[] = isCompanion ? ["profile", "prefs"] : ["profile", "prefs", "ai", "privacy"];
-  const [tab, setTab] = useState<Tab>(ai || isCompanion ? "profile" : "ai"); // AI not set up yet → its tab, so the warning shows
+  // Web: the account and the AI are managed by the administrator; there is nothing API-related to configure.
+  const tabs: Tab[] = isCompanion ? ["profile", "prefs"] : cloudEnabled ? ["profile", "prefs", "privacy"] : ["profile", "prefs", "ai", "privacy"];
+  const [tab, setTab] = useState<Tab>(ai || isCompanion || cloudEnabled ? "profile" : "ai"); // AI not set up yet → its tab, so the warning shows
   return (
     <>
       <h1 className="section-title" style={{ marginTop: 24 }}>{t("settings.title")}</h1>
@@ -358,6 +361,12 @@ export function Settings() {
             <span className="od-field od-fill"><b>{profile!.name}</b><span className="muted small">{t("settings.profileDesc")}</span></span>
             <button className="btn btn-ghost" onClick={() => openSheet(<><h3 style={{ marginBottom: 14 }}>{t("settings.editProfile")}</h3><ProfileForm initial={profile!} onDone={closeSheet} /></>)}>{t("settings.edit")}</button>
           </div>
+          {cloud && (
+            <div className="card od-row" style={gap("12px")}>
+              <span className="od-field od-fill"><b>{cloud.name}</b><span className="muted small">{cloud.email} · {cf ? "Compte géré par l'administration" : "Account managed by the administrator"}</span></span>
+              <button className="btn btn-ghost" onClick={async () => { await cloudLogout(); location.reload(); }}>{cf ? "Se déconnecter" : "Sign out"}</button>
+            </div>
+          )}
           <button className="btn btn-ghost btn-block mobile-only" onClick={logout}>{t("settings.logout")}</button>
         </>}
 

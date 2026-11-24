@@ -7,6 +7,7 @@ import { LEGEND_PASS, LEGEND_PRICE, UNIT_TEST_PASS, loadGuide, unitGrammar, unit
 import { prewarm } from "../tts";
 import { SpeakButton } from "../SpeakButton";
 import { AiSheet } from "./Settings";
+import { cloudEnabled } from "../cloud";
 import { LiveButton } from "./Screens";
 import { BIOMES, biomeScene, biomeVars } from "../biomes";
 import { buildPath, checkpointId, levelsOf, type Cefr, type PathNode, type PathUnit } from "../course";
@@ -254,8 +255,8 @@ export function Learn() {
     target?.scrollIntoView({ block: "center" });
   }, [enrollment?.id, shownLevel, course, done]); // also after a profile switch, the async course load and a finished lesson
   // First run (DECISIONS C6): offer setup once per launch; the banner stays until a provider is saved.
-  useEffect(() => { if (!ai && !setupOffered) { setupOffered = true; openSheet(<AiSheet />); } }, [ai]);
-  const setup = !ai && (
+  useEffect(() => { if (!ai && !cloudEnabled && !setupOffered) { setupOffered = true; openSheet(<AiSheet />); } }, [ai]);
+  const setup = !ai && !cloudEnabled && (
     <div className="soon-banner" role="status" style={{ borderColor: "var(--blue)" }}>
       <span className="od-field od-fill"><b>{t("ai.needed")}</b><span className="small">{t("ai.neededDesc")}</span></span>
       <button className="btn btn-blue" onClick={() => openSheet(<AiSheet />)}>{t("ai.setUp")}</button>
