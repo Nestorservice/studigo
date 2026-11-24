@@ -115,7 +115,7 @@ export function CloudGate({ children }: { children: ReactNode }) {
         </label>
         <label className="cloud-field">
           <span>{text.password}</span>
-          <input className="input" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={mode === "register" ? 12 : 1} autoComplete={mode === "register" ? "new-password" : "current-password"} />
+          <input className="input" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete={mode === "register" ? "new-password" : "current-password"} />
         </label>
 
         <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
